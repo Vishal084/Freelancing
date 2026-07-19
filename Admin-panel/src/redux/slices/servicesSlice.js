@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as adminService from '../../services/adminService';
+import * as adminService from '../../Services/adminService';
 
 export const fetchServices = createAsyncThunk('services/fetch', () => adminService.getServices()); // public route /services
 export const createService = createAsyncThunk('services/create', (data) => adminService.createService(data));

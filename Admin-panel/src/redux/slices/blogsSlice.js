@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getBlogs, createBlog, updateBlog, deleteBlog } from '../../services/adminService';
+import { getBlogs, createBlog, updateBlog, deleteBlog } from '../../Services/adminService';
 
 export const fetchBlogs = createAsyncThunk('blogs/fetch', getBlogs);
 export const addBlog = createAsyncThunk('blogs/create', (data) => createBlog(data));

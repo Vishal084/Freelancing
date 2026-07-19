@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDashboard } from '../../services/adminService';
+import { getDashboard } from '../../Services/adminService';
 
 export const fetchDashboard = createAsyncThunk('dashboard/fetch', async () => {
   return await getDashboard();

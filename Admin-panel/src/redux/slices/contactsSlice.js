@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getContacts, deleteContact } from '../../services/adminService';
+import { getContacts, deleteContact } from '../../Services/adminService';
 
 export const fetchContacts = createAsyncThunk('contacts/fetch', getContacts);
 export const removeContact = createAsyncThunk('contacts/delete', (id) => deleteContact(id));

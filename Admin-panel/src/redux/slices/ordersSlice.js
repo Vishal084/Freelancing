@@ -3,7 +3,7 @@ import {
   getAllOrders,
   updateOrderStatus,
   deleteOrder as deleteOrderAPI   // ← alias to avoid conflict
-} from '../../services/adminService';
+} from '../../Services/adminService';
 
 export const fetchAllOrders = createAsyncThunk('orders/fetchAll', getAllOrders);
 export const changeOrderStatus = createAsyncThunk(

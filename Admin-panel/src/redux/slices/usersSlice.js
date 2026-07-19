@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getUsers, deleteUser, toggleBan, toggleAdmin } from '../../services/adminService';
+import { getUsers, deleteUser, toggleBan, toggleAdmin } from '../../Services/adminService';
 
 export const fetchUsers = createAsyncThunk('users/fetch', getUsers);
 export const removeUser = createAsyncThunk('users/delete', (id) => deleteUser(id));

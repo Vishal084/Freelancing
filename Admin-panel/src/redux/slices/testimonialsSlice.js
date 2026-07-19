@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '../../services/adminService';
+import { getTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '../../Services/adminService';
 
 export const fetchTestimonials = createAsyncThunk('testimonials/fetch', getTestimonials);
 export const addTestimonial = createAsyncThunk('testimonials/create', (data) => createTestimonial(data));

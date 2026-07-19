@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getFAQs, createFAQ, updateFAQ, deleteFAQ } from '../../services/adminService';
+import { getFAQs, createFAQ, updateFAQ, deleteFAQ } from '../../Services/adminService';
 
 export const fetchFAQs = createAsyncThunk('faqs/fetch', getFAQs);
 export const addFAQ = createAsyncThunk('faqs/create', (data) => createFAQ(data));

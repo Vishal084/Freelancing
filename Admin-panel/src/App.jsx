@@ -11,7 +11,7 @@ import OrdersManage from './Pages/OrdersManage';
 import ContactsList from './Pages/ContactsList';
 import UsersManage from './Pages/UsersManage';
 import BlogManage from './Pages/BlogManage';
-import TestimonialsManage from './pages/TestimonialsManage';
+import TestimonialsManage from './Pages/TestimonialsManage';
 import FAQManage from './Pages/FAQManage';
 
 function App() {

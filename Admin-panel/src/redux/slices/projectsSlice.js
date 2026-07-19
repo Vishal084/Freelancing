@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getProjects, createProject, updateProject, deleteProject } from '../../services/adminService';
+import { getProjects, createProject, updateProject, deleteProject } from '../../Services/adminService';
 
 export const fetchProjects = createAsyncThunk('projects/fetch', getProjects);
 export const addProject = createAsyncThunk('projects/create', (data) => createProject(data));

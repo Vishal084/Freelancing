@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { login, getMe } from '../../services/adminService';
+import { login, getMe } from '../../Services/adminService';
 
 export const loginAdmin = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try { return await login(credentials); } catch (err) { return rejectWithValue(err.response.data.message); }
