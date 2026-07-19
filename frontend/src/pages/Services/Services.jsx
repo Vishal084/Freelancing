@@ -8,7 +8,7 @@ import {
   selectServicesError,
 } from '../../redux/slices/serviceSlice';
 import ServiceCard from '../../components/cards/ServiceCard/ServiceCard';
-import './Services.css';
+import './services.css';
 
 const Services = () => {
   const dispatch = useDispatch();
