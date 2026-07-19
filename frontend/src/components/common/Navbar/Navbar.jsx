@@ -65,3 +65,34 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+
+
+
+// useState       - React hook for managing component state (menu open/close)
+// Link           - React Router component for navigation links (no page reload)
+// useNavigate    - React Router hook for programmatic navigation (redirect after logout)
+// useDispatch    - Redux hook to send actions to store
+// useSelector    - Redux hook to read data from store
+// logout         - Redux action to clear auth state and localStorage
+// selectCurrentUser - Selector that returns current user object (or null)
+
+
+
+
+
+
+// Navbar Renders
+//     │
+//     ├── Check: useSelector(selectCurrentUser)
+//     │
+//     ├── user exists?
+//     │   │
+//     │   ├── YES → Show: Dashboard + Logout button
+//     │   │
+//     │   └── NO → Show: Login + Signup links
+//     │
+//     └── Mobile: Hamburger button toggles isMenuOpen
+//          │
+//          ├── isMenuOpen = true → Add 'active' class → Show dropdown
+//          └── isMenuOpen = false → Hide dropdown

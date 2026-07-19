@@ -22,3 +22,20 @@ export default ProjectCard
 // Purpose: Reusable card to display a single portfolio project.
 // Static data: None – it receives project as a prop. The data comes from Redux (projectSlice), which currently uses static projectsData.js.
 // Improvements: Added loading="lazy" for images, defensive check for missing project.`
+
+
+// No external imports (only CSS) - Pure presentational component
+// Receives project data via props from parent component
+
+
+
+// Props received from parent:
+// {
+//   project: {
+//     id: "abc123",
+//     title: "E-commerce Website",
+//     category: "Web Development",
+//     description: "A fully responsive e-commerce platform...",
+//     image: "https://images.unsplash.com/photo-..."
+//   }
+// }

@@ -11,4 +11,17 @@ const submitContact = async (req, res) => {
   }
 };
 
-module.exports = { submitContact };
+
+// this is for admin : -
+
+const getContacts = async (req, res) => {
+  const contacts = await Contact.find().sort({ createdAt: -1 });
+  res.json(contacts);
+};
+const deleteContact = async (req, res) => {
+  await Contact.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Contact deleted' });
+};
+
+
+module.exports = { submitContact, getContacts, deleteContact };

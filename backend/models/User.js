@@ -16,7 +16,28 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please add a password'],
       minlength: 6,
       select: false,
+      
     },
+
+    isAdmin: {
+  type: Boolean,
+  default: false,
+} ,
+
+
+
+// isAdmin: {
+//   type: Boolean,
+//   default: false,
+// }   this is for admin users, if you want to create an admin user, you can set this field to true when creating the user. Otherwise, it will default to false for regular users.
+
+  isBanned: {                        // ← added
+      type: Boolean,
+      default: false,
+    },
+
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
   },
   {
     timestamps: true,

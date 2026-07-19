@@ -16,3 +16,13 @@ export const store = configureStore({
 
   },
 })
+
+
+
+
+// configureStore  - Creates Redux store with good defaults (combines reducers, sets up DevTools, adds middleware)
+// authReducer     - Manages authentication state (user, token, loading, error)
+// serviceReducer  - Manages services data (list of services, loading, error)
+// orderReducer    - Manages orders data (user orders, loading, error, lastOrder)
+// projectReducer  - Manages projects data (list of projects, loading, error)
+// aboutReducer    - Manages about page data (company info, team, milestones, loading, error)

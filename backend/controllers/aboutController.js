@@ -10,4 +10,15 @@ const getAbout = async (req, res) => {
   }
 };
 
-module.exports = { getAbout };
+// this is for admin : -
+
+const updateAbout = async (req, res) => {
+  try {
+    const about = await About.findOneAndUpdate({}, req.body, { new: true, upsert: true });
+    res.json(about);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { getAbout, updateAbout };

@@ -1,14 +1,21 @@
 
-import { useSelector } from 'react-redux'
-import { selectCurrentUser, selectIsAuthenticated, selectAuthLoading, selectAuthError } from '../redux/slices/authSlice'
+// import { useSelector } from 'react-redux'
+// import { selectCurrentUser, selectIsAuthenticated, selectAuthLoading, selectAuthError } from '../redux/slices/authSlice'
 
-const useAuth = () => {
-  const user = useSelector(selectCurrentUser)
-  const isAuthenticated = useSelector(selectIsAuthenticated)
-  const isLoading = useSelector(selectAuthLoading)
-  const error = useSelector(selectAuthError)
+// const useAuth = () => {
+//   const user = useSelector(selectCurrentUser)
+//   const isAuthenticated = useSelector(selectIsAuthenticated)
+//   const isLoading = useSelector(selectAuthLoading)
+//   const error = useSelector(selectAuthError)
 
-  return { user, isAuthenticated, isLoading, error }
-}
+//   return { user, isAuthenticated, isLoading, error }
+// }
 
-export default useAuth
+// export default useAuth
+
+
+
+
+
+
+// currently these files are not in use 

@@ -28,4 +28,20 @@ const getUserOrders = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getUserOrders };
+
+// this is for admin : -
+
+const getAllOrders = async (req, res) => {
+  const orders = await Order.find().populate('userId', 'name email').sort({ createdAt: -1 });
+  res.json(orders);
+};
+const updateOrderStatus = async (req, res) => {
+  const order = await Order.findByIdAndUpdate(req.params.id, { status: req.body.status }, { new: true });
+  res.json(order);
+};
+const deleteOrder = async (req, res) => {
+  await Order.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Order deleted' });
+};
+
+module.exports = { createOrder, getUserOrders , getAllOrders, updateOrderStatus, deleteOrder };

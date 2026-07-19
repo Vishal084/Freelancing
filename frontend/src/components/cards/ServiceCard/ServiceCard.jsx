@@ -21,3 +21,17 @@ export default ServiceCard
 // Purpose: Reusable card for service listing.
 // Static data: None – data comes from Redux (serviceSlice → servicesData.js).
 // Improvements: None needed.
+
+
+
+
+// Props received from parent:
+// {
+//   service: {
+//     id: "abc123",
+//     name: "Website Development",
+//     description: "Custom responsive websites...",
+//     price: 999,
+//     icon: "🌐"
+//   }
+// }
