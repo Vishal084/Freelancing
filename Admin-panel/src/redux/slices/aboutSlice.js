@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAbout, updateAbout as updateAboutAPI } from '../../services/adminService';
+import { getAbout, updateAbout as updateAboutAPI } from '../../Services/adminService';
 
 // fetch the single About document
 export const fetchAbout = createAsyncThunk('about/fetch', getAbout);

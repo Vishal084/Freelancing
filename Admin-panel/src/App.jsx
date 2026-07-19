@@ -3,16 +3,16 @@ import { useSelector } from 'react-redux';
 import Login from './Pages/Login';
 import AdminLayout from './components/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
-import Dashboard from './pages/Dashboard';
-import ServicesManage from './pages/ServicesManage';
-import ProjectsManage from './pages/ProjectsManage';
-import AboutEdit from './pages/AboutEdit';
-import OrdersManage from './pages/OrdersManage';
-import ContactsList from './pages/ContactsList';
-import UsersManage from './pages/UsersManage';
-import BlogManage from './pages/BlogManage';
+import Dashboard from './Pages/Dashboard';
+import ServicesManage from './Pages/ServicesManage';
+import ProjectsManage from './Pages/ProjectsManage';
+import AboutEdit from './Pages/AboutEdit';
+import OrdersManage from './Pages/OrdersManage';
+import ContactsList from './Pages/ContactsList';
+import UsersManage from './Pages/UsersManage';
+import BlogManage from './Pages/BlogManage';
 import TestimonialsManage from './pages/TestimonialsManage';
-import FAQManage from './pages/FAQManage';
+import FAQManage from './Pages/FAQManage';
 
 function App() {
   return (
