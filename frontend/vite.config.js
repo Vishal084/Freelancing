@@ -1,4 +1,3 @@
-
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -21,14 +20,24 @@ export default defineConfig({
 
     rollupOptions: {
       output: {
-        // Manual chunk splitting for better caching
-        manualChunks: {
-          // Core React libraries
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          // State management
-          redux: ['@reduxjs/toolkit', 'react-redux'],
-          // Other UI utilities
-          helmet: ['react-helmet-async'],
+        // ✅ manualChunks as a function (required in recent Vite/Rollup)
+        manualChunks(id) {
+          // React core
+          if (id.includes('node_modules/react') ||
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/react-router-dom')) {
+            return 'vendor';
+          }
+          // Redux + toolkit
+          if (id.includes('node_modules/@reduxjs/toolkit') ||
+              id.includes('node_modules/react-redux')) {
+            return 'redux';
+          }
+          // Helmet
+          if (id.includes('node_modules/react-helmet-async')) {
+            return 'helmet';
+          }
+          // Any other node_modules – let Rollup decide
         },
       },
     },
