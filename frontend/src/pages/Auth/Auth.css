@@ -269,3 +269,51 @@
     padding: 2rem 1.5rem;
   }
 }
+
+
+.auth-field {
+  position: relative;
+}
+
+.auth-field.valid input {
+  border-color: #22c55e; /* green border */
+}
+
+.auth-field.valid::after {
+  content: '✓';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #22c55e;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* Adjust for password field because it has a wrapper */
+.auth-field .auth-password-wrapper {
+  position: relative;
+}
+
+.auth-field.valid .auth-password-wrapper input {
+  border-color: #22c55e;
+}
+
+.auth-field.valid .auth-password-wrapper::after {
+  content: '✓';
+  position: absolute;
+  right: 40px; /* avoid overlapping the toggle icon */
+  top: 50%;
+  transform: translateY(-50%);
+  color: #22c55e;
+  font-weight: bold;
+  pointer-events: none;
+}
+.password-strength {
+  margin-top: 6px;
+}
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s;
+}

@@ -3,8 +3,8 @@ import authReducer from './slices/authSlice'
 import serviceReducer from './slices/serviceSlice'
 import orderReducer from './slices/orderSlice'
 import projectReducer from './slices/projectSlice'
-import aboutReducer from './slices/aboutSlice';
-
+import aboutReducer from './slices/aboutSlice'
+import testimonialReducer from './slices/testimonialSlice' // ✅ new
 
 export const store = configureStore({
   reducer: {
@@ -12,11 +12,10 @@ export const store = configureStore({
     services: serviceReducer,
     orders: orderReducer,
     projects: projectReducer,
-    about: aboutReducer,   // new
-
+    about: aboutReducer,
+    testimonials: testimonialReducer, // ✅ new
   },
 })
-
 
 
 

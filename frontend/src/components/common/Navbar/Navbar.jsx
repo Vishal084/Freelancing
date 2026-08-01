@@ -1,6 +1,6 @@
 // frontend/src/components/common/Navbar/Navbar.jsx
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, selectCurrentUser } from '../../../redux/slices/authSlice';
 import './Navbar.css';
@@ -9,6 +9,7 @@ const Navbar = () => {
   const user = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -18,6 +19,37 @@ const Navbar = () => {
   };
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  // ✅ Active route helper
+  const isActive = (path) => (location.pathname === path ? 'nav-active' : '');
+
+  // ✅ Close menu on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, []);
+
+  // ✅ Scroll lock & focus trap when mobile menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+      // Small delay to allow the DOM to update, then focus the first link
+      setTimeout(() => {
+        const firstLink = document.querySelector('.nav-links.active a');
+        firstLink?.focus();
+      }, 0);
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
 
   return (
     <nav className="navbar">
@@ -38,14 +70,42 @@ const Navbar = () => {
         </button>
 
         <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-          <li><Link to="/" onClick={closeMenu}>Home</Link></li>
-          <li><Link to="/services" onClick={closeMenu}>Services</Link></li>
-          <li><Link to="/portfolio" onClick={closeMenu}>Portfolio</Link></li>
-          <li><Link to="/about" onClick={closeMenu}>About</Link></li>
-          <li><Link to="/contact" onClick={closeMenu}>Contact</Link></li>
+          <li>
+            <Link to="/" className={isActive('/')} onClick={closeMenu}>
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link to="/services" className={isActive('/services')} onClick={closeMenu}>
+              Services
+            </Link>
+          </li>
+          <li>
+            <Link to="/portfolio" className={isActive('/portfolio')} onClick={closeMenu}>
+              Portfolio
+            </Link>
+          </li>
+          <li>
+            <Link to="/about" className={isActive('/about')} onClick={closeMenu}>
+              About
+            </Link>
+          </li>
+          <li>
+            <Link to="/contact" className={isActive('/contact')} onClick={closeMenu}>
+              Contact
+            </Link>
+          </li>
           {user ? (
             <>
-              <li><Link to="/dashboard" onClick={closeMenu}>Dashboard</Link></li>
+              <li>
+                <Link
+                  to="/dashboard"
+                  className={isActive('/dashboard')}
+                  onClick={closeMenu}
+                >
+                  Dashboard
+                </Link>
+              </li>
               <li>
                 <button onClick={handleLogout} className="btn-logout">
                   Logout
@@ -54,8 +114,16 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <li><Link to="/login" onClick={closeMenu}>Login</Link></li>
-              <li><Link to="/signup" onClick={closeMenu}>Signup</Link></li>
+              <li>
+                <Link to="/login" className={isActive('/login')} onClick={closeMenu}>
+                  Login
+                </Link>
+              </li>
+              <li>
+                <Link to="/signup" className={isActive('/signup')} onClick={closeMenu}>
+                  Signup
+                </Link>
+              </li>
             </>
           )}
         </ul>

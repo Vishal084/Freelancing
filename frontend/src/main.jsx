@@ -1,27 +1,40 @@
-import React from 'react'
+
+// frontend/src/main.jsx
+import React from 'react';
+import './config'; // runs validation before app renders
+
+import ReactDOM from 'react-dom/client';
+import { Provider } from 'react-redux';
 import { HelmetProvider } from 'react-helmet-async';
+import * as Sentry from '@sentry/react';
+import { browserTracingIntegration } from '@sentry/react';
+import { store } from './redux/store';
+import App from './App';
+import ErrorBoundary from './components/ErrorBoundary';   // ✅ custom error boundary
+import './index.css';
 
-import ReactDOM from 'react-dom/client'
-import { Provider } from 'react-redux'
-import { store } from './redux/store'
-import App from './App'
-import './index.css'
+// ---------- Sentry Initialization ----------
+Sentry.init({
+  dsn: 'YOUR_SENTRY_DSN',   // 🔁 Replace with your real DSN
+  integrations: [browserTracingIntegration()],
+  tracesSampleRate: 1.0,
+});
 
-// Expose store for API interceptor  , its GLOBAL STORE EXPOSURE: Makes Redux store accessible globallyUsed by api.js interceptor to auto-logout on 401 errors
-
+// Expose store for API interceptor (auto‑logout on 401)
 window.__REDUX_STORE__ = store;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}>
-            <HelmetProvider>
-
-      <App />
-            </HelmetProvider>
-
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <HelmetProvider>
+          <App />
+        </HelmetProvider>
+      </Provider>
+    </ErrorBoundary>
   </React.StrictMode>
-)
+);
+
 
 
 // . IMPORTS (What we're bringing in):

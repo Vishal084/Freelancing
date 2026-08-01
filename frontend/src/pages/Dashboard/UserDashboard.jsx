@@ -4,11 +4,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   fetchUserOrders,
+  cancelOrder,                     // ✅ new import
   selectUserOrders,
   selectOrdersLoading,
   selectOrdersError,
+  ORDER_STATUS_COLORS,             // ✅ new import
 } from '../../redux/slices/orderSlice';
 import { selectCurrentUser, logout } from '../../redux/slices/authSlice';
+import { formatDate, truncateText } from '../../utils/helpers';
 import './Dashboard.css';
 
 const UserDashboard = () => {
@@ -30,7 +33,13 @@ const UserDashboard = () => {
     dispatch(logout());
   };
 
-  // If user is not logged in (shouldn't happen due to ProtectedRoute, but safety)
+  // ✅ Cancel handler with confirmation
+  const handleCancelOrder = (orderId) => {
+    if (window.confirm('Are you sure you want to cancel this order?')) {
+      dispatch(cancelOrder(orderId));
+    }
+  };
+
   if (!user) {
     return (
       <main className="dashboard-container">
@@ -92,21 +101,31 @@ const UserDashboard = () => {
               <div key={order._id} className="order-card">
                 <div className="order-card-header">
                   <h3>{order.serviceName}</h3>
-                  <span className={`order-status-badge ${order.status}`}>
+                  {/* ✅ Coloured status badge */}
+                  <span
+                    className="order-status-badge"
+                    style={{
+                      backgroundColor: ORDER_STATUS_COLORS[order.status] || '#666',
+                    }}
+                  >
                     {order.status}
                   </span>
                 </div>
-                <p className="order-details">{order.details}</p>
+                <p className="order-details">{truncateText(order.details, 120)}</p>
                 <div className="order-meta">
                   <span className="order-price">${order.price}</span>
-                  <span className="order-date">
-                    {new Date(order.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
+                  <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
+                {/* ✅ Cancel button (only for pending/in-progress orders) */}
+                {(order.status === 'pending' || order.status === 'in_progress') && (
+                  <button
+                    onClick={() => handleCancelOrder(order._id)}
+                    className="btn btn-danger"
+                    style={{ marginTop: '0.5rem' }}
+                  >
+                    Cancel Order
+                  </button>
+                )}
               </div>
             ))}
           </div>

@@ -3,21 +3,37 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { fetchAboutData, selectAboutData, selectAboutLoading, selectAboutError } from '../../redux/slices/aboutSlice';
+import {
+  fetchAboutData,
+  selectAboutData,
+  selectAboutLoading,
+  selectAboutError,
+} from '../../redux/slices/aboutSlice';
+import {
+  fetchTestimonials,
+  selectTestimonials,
+  selectTestimonialsLoading,
+  selectTestimonialsError,
+} from '../../redux/slices/testimonialSlice';
 import './About.css';
 
 const AboutPage = () => {
   const dispatch = useDispatch();
   const aboutData = useSelector(selectAboutData);
-  const loading = useSelector(selectAboutLoading);
-  const error = useSelector(selectAboutError);
+  const aboutLoading = useSelector(selectAboutLoading);
+  const aboutError = useSelector(selectAboutError);
+
+  const testimonials = useSelector(selectTestimonials);
+  const testimonialsLoading = useSelector(selectTestimonialsLoading);
+  const testimonialsError = useSelector(selectTestimonialsError);
 
   useEffect(() => {
     dispatch(fetchAboutData());
+    dispatch(fetchTestimonials());
     window.scrollTo(0, 0);
   }, [dispatch]);
 
-  // Image fallback handler (same logic as before)
+  // Image fallback handler
   const handleImageError = (e) => {
     if (e.target.src.includes('/images/fallback-person.jpg')) {
       e.target.onerror = null;
@@ -29,7 +45,7 @@ const AboutPage = () => {
   };
 
   // Loading state
-  if (loading) {
+  if (aboutLoading) {
     return (
       <main className="container" role="status">
         <div className="section-loading">
@@ -41,11 +57,14 @@ const AboutPage = () => {
   }
 
   // Error state
-  if (error) {
+  if (aboutError) {
     return (
       <main className="container" role="alert">
         <div className="section-error">
-          <p>⚠️ {error}</p>
+          <p>⚠️ {aboutError}</p>
+          <button onClick={() => dispatch(fetchAboutData())} className="btn btn-secondary">
+            Retry
+          </button>
         </div>
       </main>
     );
@@ -61,6 +80,30 @@ const AboutPage = () => {
   }
 
   const { coreValues, teamMembers, milestones } = aboutData;
+
+  // Stats: dynamic from API, fallback to static
+  const stats = aboutData.stats || [
+    { icon: '📅', value: '5+', label: 'Years Experience' },
+    { icon: '🏆', value: '150+', label: 'Projects Delivered' },
+    { icon: '👥', value: '98%', label: 'Happy Clients' },
+    { icon: '🌍', value: '15+', label: 'Countries Served' },
+  ];
+
+  // Testimonials fallback
+  const fallbackTestimonials = [
+    {
+      quote: 'They delivered our project ahead of schedule with outstanding quality.',
+      name: 'Jane Doe',
+      company: 'TechCorp',
+    },
+    {
+      quote: 'Professional, responsive, and highly skilled. Highly recommended!',
+      name: 'John Smith',
+      company: 'StartupXYZ',
+    },
+  ];
+
+  const displayTestimonials = testimonials.length > 0 ? testimonials : fallbackTestimonials;
 
   return (
     <>
@@ -146,7 +189,7 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* ======== STATS (static) ======== */}
+        {/* ======== STATS (dynamic with fallback) ======== */}
         <section className="about-stats" aria-labelledby="stats-heading">
           <div className="container">
             <div className="section-header">
@@ -154,31 +197,18 @@ const AboutPage = () => {
               <p>Years of dedication, countless projects, and many satisfied clients</p>
             </div>
             <div className="stats-grid">
-              <div className="stat-item">
-                <div className="stat-icon" aria-hidden="true">📅</div>
-                <div className="stat-number">5+</div>
-                <div className="stat-label">Years Experience</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-icon" aria-hidden="true">🏆</div>
-                <div className="stat-number">150+</div>
-                <div className="stat-label">Projects Delivered</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-icon" aria-hidden="true">👥</div>
-                <div className="stat-number">98%</div>
-                <div className="stat-label">Happy Clients</div>
-              </div>
-              <div className="stat-item">
-                <div className="stat-icon" aria-hidden="true">🌍</div>
-                <div className="stat-number">15+</div>
-                <div className="stat-label">Countries Served</div>
-              </div>
+              {stats.map((stat, index) => (
+                <div key={index} className="stat-item">
+                  <div className="stat-icon" aria-hidden="true">{stat.icon}</div>
+                  <div className="stat-number">{stat.value}</div>
+                  <div className="stat-label">{stat.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ======== CORE VALUES (dynamic from Redux) ======== */}
+        {/* ======== CORE VALUES (dynamic) ======== */}
         <section className="about-values" aria-labelledby="values-heading">
           <div className="container">
             <div className="section-header">
@@ -250,6 +280,43 @@ const AboutPage = () => {
                         ))}
                       </div>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ======== TESTIMONIALS (dynamic with loading/error) ======== */}
+        <section id="testimonials" className="about-testimonials" aria-labelledby="testimonials-heading">
+          <div className="container">
+            <div className="section-header">
+              <h2 id="testimonials-heading">What Our Clients Say</h2>
+              <p>Trusted by businesses worldwide</p>
+            </div>
+
+            {testimonialsLoading && (
+              <div className="section-loading" role="status">
+                <div className="spinner" aria-hidden="true"></div>
+                <p>Loading testimonials...</p>
+              </div>
+            )}
+
+            {testimonialsError && (
+              <div className="section-error" role="alert">
+                <p>⚠️ Could not load testimonials. Showing highlights instead.</p>
+                <button onClick={() => dispatch(fetchTestimonials())} className="btn btn-secondary">
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <div className="testimonials-grid">
+              {displayTestimonials.map((t, i) => (
+                <div key={i} className="testimonial-card">
+                  <p className="testimonial-text">“{t.quote}”</p>
+                  <div className="testimonial-author">
+                    <strong>{t.name}</strong>, {t.company}
                   </div>
                 </div>
               ))}

@@ -1,11 +1,16 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'; // <-- must add useLocation
 import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '../redux/slices/authSlice'
 
 const ProtectedRoute = ({ children }) => {
-  const user = useSelector(selectCurrentUser)
-  return user ? children : <Navigate to="/login" />
-}
+  const user = useSelector(selectCurrentUser);
+  const location = useLocation();
+  
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+  return children;
+};
 
 export default ProtectedRoute
 

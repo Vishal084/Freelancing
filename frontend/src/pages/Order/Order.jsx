@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async'; // ✅ added
 import {
   fetchServices,
   selectAllServices,
@@ -18,6 +19,8 @@ import {
 } from '../../redux/slices/orderSlice';
 import { selectCurrentUser } from '../../redux/slices/authSlice';
 import './Order.css';
+
+const STORAGE_KEY = 'order_form'; // session storage key
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -41,6 +44,67 @@ const Order = () => {
   const [successMessage, setSuccessMessage] = useState(false);
   const [loginPrompt, setLoginPrompt] = useState(false);
 
+  // ✅ Double submission lock
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Restore details from session on mount (no service logic here)
+  useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.details) setDetails(parsed.details);
+      } catch (e) {
+        // ignore corrupted data
+      }
+    }
+  }, []);
+
+  // Unified effect: restore/override selected service once services are available
+  useEffect(() => {
+    if (services.length === 0) return; // wait until services are loaded
+
+    // 1. URL param takes absolute priority
+    if (serviceId) {
+      const found = services.find((s) => s.id === serviceId);
+      setSelectedService(found || null);
+      if (!found) {
+        setFormError(
+          'The selected service was not found. Please choose one from the list below.'
+        );
+      } else {
+        setFormError(''); // clear any previous error
+      }
+      return;
+    }
+
+    // 2. Fallback to session storage
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.serviceId) {
+          const found = services.find((s) => s.id === parsed.serviceId);
+          if (found) {
+            setSelectedService(found);
+            return;
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 3. Nothing usable – leave null (selectedService already null)
+  }, [serviceId, services]);
+
+  // Save form state to session whenever details or selectedService change
+  useEffect(() => {
+    const dataToSave = {
+      details,
+      serviceId: selectedService?.id || null,
+    };
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+  }, [details, selectedService]);
+
   // Fetch services if not already loaded
   useEffect(() => {
     if (!services.length && !servicesLoading) {
@@ -48,23 +112,12 @@ const Order = () => {
     }
   }, [dispatch, services.length, servicesLoading]);
 
-  // When services are loaded and a serviceId exists, try to find it
-  useEffect(() => {
-    if (serviceId && services.length > 0) {
-      const found = services.find((s) => s.id === serviceId);
-      setSelectedService(found || null);
-      if (!found) {
-        setFormError('The selected service was not found. Please choose one from the list below.');
-      }
-    }
-  }, [serviceId, services]);
-
   // Handle successful order creation
   useEffect(() => {
     if (lastOrder) {
       setSuccessMessage(true);
       dispatch(clearLastOrder());
-      // Auto‑redirect after 3 seconds
+      sessionStorage.removeItem(STORAGE_KEY);
       const timer = setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
@@ -72,7 +125,7 @@ const Order = () => {
     }
   }, [lastOrder, dispatch, navigate]);
 
-  // Clear order error when user starts typing or on unmount
+  // Clear order error on unmount
   useEffect(() => {
     return () => {
       dispatch(clearOrdersError());
@@ -97,9 +150,12 @@ const Order = () => {
     clearFormErrorOnChange();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Clear previous messages
+
+    // ✅ Prevent double submission
+    if (isSubmitting) return;
+
     setFormError('');
     setLoginPrompt(false);
     dispatch(clearOrdersError());
@@ -108,26 +164,38 @@ const Order = () => {
       setLoginPrompt(true);
       return;
     }
-
     if (!selectedService) {
       setFormError('Please select a service before placing an order.');
       return;
     }
-
     if (!details.trim()) {
       setFormError('Please provide project details.');
       return;
     }
 
-    dispatch(
-      createOrder({
-        // userId: user.id,
-        serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        details: details.trim(),
-        price: selectedService.price,
-      })
-    );
+    // ✅ Validate that the price hasn't changed since selection
+    const currentService = services.find((s) => s.id === selectedService.id);
+    if (!currentService || selectedService.price !== currentService.price) {
+      setFormError('Service price has changed. Please re-select the service.');
+      return;
+    }
+
+    // Lock submission
+    setIsSubmitting(true);
+
+    try {
+      await dispatch(
+        createOrder({
+          serviceId: selectedService.id,
+          serviceName: selectedService.name,
+          details: details.trim(),
+          price: selectedService.price,
+        })
+      );
+    } finally {
+      // Release lock regardless of success/failure
+      setIsSubmitting(false);
+    }
   };
 
   // Loading while fetching services
@@ -157,139 +225,143 @@ const Order = () => {
   }
 
   return (
-    <main className="order-page-container" aria-labelledby="order-heading">
-      <h1 id="order-heading">Place an Order</h1>
+    <>
+      {/* ✅ SEO meta tags added */}
+      <Helmet>
+        <title>Place Your Order – FreelancePro</title>
+        <meta
+          name="description"
+          content="Choose from our professional services and place your order. Provide your project details and we’ll get started right away."
+        />
+      </Helmet>
 
-      {/* Login prompt – friendly message instead of alert */}
-      {loginPrompt && (
-        <div className="order-warning" role="alert">
-          <p>🔒 You need to log in before placing an order.</p>
-          <Link
-            to="/login"
-            state={{ from: location.pathname + location.search }}
-            className="btn btn-primary"
-          >
-            Log In
-          </Link>
-        </div>
-      )}
+      <main className="order-page-container" aria-labelledby="order-heading">
+        <h1 id="order-heading">Place an Order</h1>
 
-      {/* Success message – replaces alert */}
-      {successMessage && (
-        <div className="order-success" role="status">
-          <span className="success-icon">✅</span>
-          <div>
-            <h3>Order Placed Successfully!</h3>
-            <p>Redirecting you to your dashboard in a few seconds…</p>
-            <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
-              Go to Dashboard Now
+        {loginPrompt && (
+          <div className="order-warning" role="alert">
+            <p>🔒 You need to log in before placing an order.</p>
+            <Link
+              to="/login"
+              state={{ from: location.pathname + location.search }}
+              className="btn btn-primary"
+            >
+              Log In
+            </Link>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="order-success" role="status">
+            <span className="success-icon">✅</span>
+            <div>
+              <h3>Order Placed Successfully!</h3>
+              <p>Redirecting you to your dashboard in a few seconds…</p>
+              <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
+                Go to Dashboard Now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {formError && (
+          <div className="order-error-block" role="alert">
+            <p>⚠️ {formError}</p>
+          </div>
+        )}
+
+        {orderError && !successMessage && (
+          <div className="order-error-block" role="alert">
+            <p>❌ {orderError}</p>
+            <button onClick={() => dispatch(clearOrdersError())} className="btn btn-text">
+              Dismiss
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Generic form error (validation / missing service) */}
-      {formError && (
-        <div className="order-error-block" role="alert">
-          <p>⚠️ {formError}</p>
-        </div>
-      )}
-
-      {/* API error from Redux */}
-      {orderError && !successMessage && (
-        <div className="order-error-block" role="alert">
-          <p>❌ {orderError}</p>
-          <button onClick={() => dispatch(clearOrdersError())} className="btn btn-text">
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* If no serviceId was passed, show a selection dropdown */}
-      {!serviceId && !successMessage && (
-        <div className="order-service-select">
-          <label htmlFor="service-select">Choose a service:</label>
-          <select
-            id="service-select"
-            value={selectedService?.id || ''}
-            onChange={handleServiceSelect}
-            disabled={services.length === 0}
-          >
-            <option value="">-- Select a service --</option>
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} (${s.price})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {/* If we have a service (pre‑selected or chosen), show the form */}
-      {selectedService && !successMessage && (
-        <div className="order-form-card">
-          <div className="order-service-summary">
-            <h2>{selectedService.name}</h2>
-            <p className="order-price">${selectedService.price}</p>
-            <p className="order-description">{selectedService.description}</p>
+        {/* Service selection when no serviceId */}
+        {!serviceId && !successMessage && (
+          <div className="order-service-select">
+            <label htmlFor="service-select">Choose a service:</label>
+            <select
+              id="service-select"
+              value={selectedService?.id || ''}
+              onChange={handleServiceSelect}
+              disabled={services.length === 0}
+            >
+              <option value="">-- Select a service --</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} (${s.price})
+                </option>
+              ))}
+            </select>
           </div>
+        )}
 
-          <form onSubmit={handleSubmit} noValidate>
-            <div className="order-field">
-              <label htmlFor="order-details">Project Details / Requirements *</label>
-              <textarea
-                id="order-details"
-                value={details}
-                onChange={handleDetailsChange}
-                rows="6"
-                required
-                placeholder="Describe your project, goals, timeline, and any specific needs…"
-              />
+        {selectedService && !successMessage && (
+          <div className="order-form-card">
+            <div className="order-service-summary">
+              <h2>{selectedService.name}</h2>
+              <p className="order-price">${selectedService.price}</p>
+              <p className="order-description">{selectedService.description}</p>
             </div>
 
-            <div className="order-actions">
-              <button
-                type="submit"
-                disabled={orderLoading}
-                className="btn btn-primary"
-              >
-                {orderLoading ? (
-                  <>
-                    <span className="spinner" aria-hidden="true"></span>
-                    Placing Order...
-                  </>
-                ) : (
-                  'Confirm Order'
-                )}
-              </button>
-              <Link to="/services" className="btn btn-secondary">
-                Browse More Services
-              </Link>
-            </div>
-          </form>
-        </div>
-      )}
+            <form onSubmit={handleSubmit} noValidate>
+              <div className="order-field">
+                <label htmlFor="order-details">Project Details / Requirements *</label>
+                <textarea
+                  id="order-details"
+                  value={details}
+                  onChange={handleDetailsChange}
+                  rows="6"
+                  required
+                  placeholder="Describe your project, goals, timeline, and any specific needs…"
+                />
+              </div>
 
-      {/* No service selected and no serviceId – fallback */}
-      {!selectedService && !serviceId && !successMessage && (
-        <div className="order-empty">
-          <p>Select a service from the list above, or</p>
-          <Link to="/services" className="btn btn-primary">
-            Browse All Services
-          </Link>
-        </div>
-      )}
+              <div className="order-actions">
+                <button
+                  type="submit"
+                  disabled={orderLoading || isSubmitting}
+                  className="btn btn-primary"
+                >
+                  {orderLoading || isSubmitting ? (
+                    <>
+                      <span className="spinner" aria-hidden="true"></span>
+                      Placing Order...
+                    </>
+                  ) : (
+                    'Confirm Order'
+                  )}
+                </button>
+                <Link to="/services" className="btn btn-secondary">
+                  Browse More Services
+                </Link>
+              </div>
+            </form>
+          </div>
+        )}
 
-      {/* Service ID provided but not found */}
-      {serviceId && !selectedService && !servicesLoading && !successMessage && (
-        <div className="order-error-block">
-          <p>The service you requested doesn’t exist or was removed.</p>
-          <Link to="/services" className="btn btn-primary">
-            View Available Services
-          </Link>
-        </div>
-      )}
-    </main>
+        {!selectedService && !serviceId && !successMessage && (
+          <div className="order-empty">
+            <p>Select a service from the list above, or</p>
+            <Link to="/services" className="btn btn-primary">
+              Browse All Services
+            </Link>
+          </div>
+        )}
+
+        {serviceId && !selectedService && !servicesLoading && !successMessage && (
+          <div className="order-error-block">
+            <p>The service you requested doesn’t exist or was removed.</p>
+            <Link to="/services" className="btn btn-primary">
+              View Available Services
+            </Link>
+          </div>
+        )}
+      </main>
+    </>
   );
 };
 

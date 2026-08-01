@@ -17,19 +17,45 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState('');
 
+  // ✅ Password strength state
+  const [strength, setStrength] = useState({ level: '', color: '', score: 0 });
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isLoading = useSelector(selectAuthLoading);
   const apiError = useSelector(selectAuthError);
 
+  // Clear errors on unmount
   useEffect(() => {
     return () => dispatch(clearError());
   }, [dispatch]);
 
+  // Clear errors when inputs change
   useEffect(() => {
     if (apiError) dispatch(clearError());
     if (validationError) setValidationError('');
   }, [name, email, password]);
+
+  // ✅ Password strength evaluator
+  const evaluateStrength = (pwd) => {
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    if (score <= 1) return { level: 'Weak', color: '#ef4444', score };
+    if (score <= 3) return { level: 'Medium', color: '#f59e0b', score };
+    return { level: 'Strong', color: '#10b981', score };
+  };
+
+  // ✅ Handle password change
+  const handlePasswordChange = (e) => {
+    const newPwd = e.target.value;
+    setPassword(newPwd);
+    setStrength(evaluateStrength(newPwd));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -115,7 +141,7 @@ const Signup = () => {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Min. 6 characters"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={handlePasswordChange}   // ✅ updated handler
                     required
                     autoComplete="new-password"
                   />
@@ -128,6 +154,22 @@ const Signup = () => {
                     {showPassword ? '🙈' : '👁️'}
                   </button>
                 </div>
+
+                {/* ✅ Password strength indicator */}
+                {password.length > 0 && (
+                  <div className="password-strength">
+                    <div
+                      className="strength-bar"
+                      style={{
+                        width: `${(strength.score / 5) * 100}%`,
+                        backgroundColor: strength.color,
+                      }}
+                    />
+                    <span style={{ color: strength.color, fontSize: '0.85rem' }}>
+                      {strength.level}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <button

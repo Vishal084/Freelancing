@@ -1,7 +1,26 @@
 // frontend/src/redux/slices/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import authService from '../../services/authService'
-import api from '../../services/api' // <-- import the shared axios instance
+import api from '../../services/api' // shared axios instance
+
+// ------------------------------------------------------------------
+// Security note:
+// JWTs stored in localStorage are vulnerable to XSS.
+// In a high‑security production app, consider using
+// httpOnly cookies + CSRF tokens instead.
+// ------------------------------------------------------------------
+
+// Helper: check if a JWT is expired (or missing)
+// (You can move this to utils/helpers.js and import it)
+const isTokenExpired = (token) => {
+  if (!token) return true
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now()
+  } catch {
+    return true
+  }
+}
 
 // Constants for localStorage keys (avoid typos)
 const STORAGE_KEYS = {
@@ -9,13 +28,29 @@ const STORAGE_KEYS = {
   TOKEN: 'token',
 }
 
-// Helper to load user from localStorage on app init
+// Helper to safely load user from localStorage on app init
 const loadUserFromStorage = () => {
   const userJson = localStorage.getItem(STORAGE_KEYS.USER)
-  return userJson ? JSON.parse(userJson) : null
+  const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
+
+  // If missing or expired – wipe and return null
+  if (!userJson || !token || isTokenExpired(token)) {
+    localStorage.removeItem(STORAGE_KEYS.USER)
+    localStorage.removeItem(STORAGE_KEYS.TOKEN)
+    return null
+  }
+
+  try {
+    return JSON.parse(userJson)
+  } catch {
+    localStorage.removeItem(STORAGE_KEYS.USER)
+    localStorage.removeItem(STORAGE_KEYS.TOKEN)
+    return null
+  }
 }
 
-// Async thunks
+// ── Async Thunks ──────────────────────────────────────────────
+
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
@@ -40,7 +75,8 @@ export const signup = createAsyncThunk(
   }
 )
 
-// 🔁 New: verify token validity on app start
+// Verify token validity on app start
+// NO manual localStorage cleanup here – the 401 interceptor handles that
 export const verifyToken = createAsyncThunk(
   'auth/verify',
   async (_, { rejectWithValue }) => {
@@ -48,13 +84,13 @@ export const verifyToken = createAsyncThunk(
       const response = await api.get('/auth/me')
       return response.data
     } catch (error) {
-      // Token invalid or expired → force logout
-      localStorage.removeItem(STORAGE_KEYS.USER)
-      localStorage.removeItem(STORAGE_KEYS.TOKEN)
-      return rejectWithValue('Session expired')
+      // Let the interceptor handle 401 – just return the error
+      return rejectWithValue(error.response?.data?.message || 'Session expired')
     }
   }
 )
+
+// ── Slice ─────────────────────────────────────────────────────
 
 const authSlice = createSlice({
   name: 'auth',
@@ -95,6 +131,7 @@ const authSlice = createSlice({
         state.isLoading = false
         state.error = action.payload || 'Login failed'
       })
+
       // SIGNUP
       .addCase(signup.pending, (state) => {
         state.isLoading = true
@@ -110,21 +147,26 @@ const authSlice = createSlice({
         state.isLoading = false
         state.error = action.payload || 'Signup failed'
       })
+
       // VERIFY TOKEN
       .addCase(verifyToken.fulfilled, (state, action) => {
         state.user = action.payload
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(action.payload))
+        // token remains unchanged (already in storage)
       })
-      .addCase(verifyToken.rejected, (state) => {
-        state.user = null
-        localStorage.removeItem(STORAGE_KEYS.USER)
-        localStorage.removeItem(STORAGE_KEYS.TOKEN)
+      .addCase(verifyToken.rejected, (state, action) => {
+        // Do NOT clear user or storage here!
+        // - 401 → interceptor already dispatched 'logout' and cleared everything
+        // - network error → we still have a valid token, keep the user logged in
+        // Just set an error message so the UI can decide if needed.
+        state.error = action.payload || 'Failed to verify session'
       })
   },
 })
 
 export const { logout, clearUser, clearError } = authSlice.actions
 
+// Selectors
 export const selectCurrentUser = (state) => state.auth.user
 export const selectIsAuthenticated = (state) => !!state.auth.user
 export const selectAuthLoading = (state) => state.auth.isLoading

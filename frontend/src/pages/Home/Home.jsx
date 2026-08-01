@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; // <-- added
+import { Helmet } from 'react-helmet-async';
 import {
   fetchServices,
   selectAllServices,
@@ -20,7 +20,6 @@ import ProjectCard from '../../components/cards/ProjectCard/ProjectCard';
 import './Home.css';
 
 const Home = () => {
-  
   const dispatch = useDispatch();
 
   const services = useSelector(selectAllServices);
@@ -31,7 +30,7 @@ const Home = () => {
   const projectsLoading = useSelector(selectProjectsLoading);
   const projectsError = useSelector(selectProjectsError);
 
-  // Retry triggers (local state) to re‑fetch when the user clicks “Retry”
+  // Retry triggers
   const [retryServices, setRetryServices] = useState(false);
   const [retryProjects, setRetryProjects] = useState(false);
 
@@ -44,18 +43,14 @@ const Home = () => {
     window.scrollTo(0, 0);
   }, [dispatch, retryProjects]);
 
-  // Image fallback – if the Unsplash image fails AND the local fallback fails,
-  // we show a coloured placeholder to avoid a broken image altogether.
+  // Image fallback – now used for the self-hosted hero image too
   const handleImageError = (e) => {
     if (e.target.src.includes('/images/hero-fallback.jpg')) {
-      // Prevent further attempts
       e.target.onerror = null;
-      // Inline SVG or a simple div placeholder is better – using a data URI
       e.target.src =
         'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"%3E%3Crect fill="%234f46e5" width="600" height="400"/%3E%3Ctext fill="white" font-family="sans-serif" font-size="24" x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle"%3EDigital Solutions%3C/text%3E%3C/svg%3E';
       return;
     }
-    // First failure → try local fallback
     e.target.src = '/images/hero-fallback.jpg';
   };
 
@@ -64,12 +59,11 @@ const Home = () => {
 
   return (
     <>
-      {/* SEO & Meta Tags */}
       <Helmet>
         <title>FreelancePro – Build Your Digital Future</title>
-        <meta 
-          name="description" 
-          content="We create stunning websites, scalable web apps, and modern digital solutions. Trusted by 100+ companies. Get your project started today." 
+        <meta
+          name="description"
+          content="We create stunning websites, scalable web apps, and modern digital solutions. Trusted by 100+ companies. Get your project started today."
         />
         <meta property="og:title" content="FreelancePro – Digital Solutions" />
         <meta property="og:description" content="We deliver exceptional websites, web apps, and mobile apps to grow your business." />
@@ -133,11 +127,16 @@ const Home = () => {
                 </div>
               </div>
 
+              {/* ✅ Optimised hero image */}
               <div className="hero-image">
                 <img
-                  src="https://images.unsplash.com/photo-1551650975-87deedd944c3"
+                  src="/images/hero.webp"
+                  srcSet="/images/hero-400.webp 400w, /images/hero-800.webp 800w, /images/hero-1200.webp 1200w"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  width={600}
+                  height={400}
                   alt="Abstract digital illustration representing our software development and design work"
-                  loading="lazy"
+                  fetchpriority="high"
                   onError={handleImageError}
                 />
               </div>
@@ -153,7 +152,6 @@ const Home = () => {
               <p>Comprehensive digital solutions tailored to your business needs</p>
             </div>
 
-            {/* Loading */}
             {servicesLoading && (
               <div className="section-loading" role="status">
                 <div className="spinner" aria-hidden="true"></div>
@@ -161,7 +159,6 @@ const Home = () => {
               </div>
             )}
 
-            {/* Error + Retry */}
             {!servicesLoading && servicesError && (
               <div className="section-error" role="alert">
                 <p>⚠️ Failed to load services. Please try again later.</p>
@@ -171,7 +168,6 @@ const Home = () => {
               </div>
             )}
 
-            {/* Normal grid */}
             {!servicesLoading && !servicesError && services.length > 0 && (
               <>
                 <div className="services-grid">
@@ -187,7 +183,6 @@ const Home = () => {
               </>
             )}
 
-            {/* Empty state (no services in DB) */}
             {!servicesLoading && !servicesError && services.length === 0 && (
               <div className="section-empty">
                 <p>No services available at the moment. Check back soon!</p>
@@ -204,7 +199,6 @@ const Home = () => {
               <p>Showcasing our best work and successful projects</p>
             </div>
 
-            {/* Loading */}
             {projectsLoading && (
               <div className="section-loading" role="status">
                 <div className="spinner" aria-hidden="true"></div>
@@ -212,7 +206,6 @@ const Home = () => {
               </div>
             )}
 
-            {/* Error + Retry */}
             {!projectsLoading && projectsError && (
               <div className="section-error" role="alert">
                 <p>⚠️ Failed to load projects. Please try again later.</p>
@@ -222,7 +215,6 @@ const Home = () => {
               </div>
             )}
 
-            {/* Normal: show first 3 */}
             {!projectsLoading && !projectsError && projects.length > 0 && (
               <>
                 <div className="projects-grid">
@@ -238,7 +230,6 @@ const Home = () => {
               </>
             )}
 
-            {/* Empty state */}
             {!projectsLoading && !projectsError && projects.length === 0 && (
               <div className="section-empty">
                 <p>No projects to showcase right now. Come back soon!</p>

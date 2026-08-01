@@ -1,51 +1,72 @@
+// frontend/src/App.jsx
 import { BrowserRouter } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
+
 import AppRoutes from './routes/AppRoutes';
 import Navbar from './components/common/Navbar/Navbar';
 import Footer from './components/common/Footer/Footer';
-import { useEffect } from 'react';
-
-
-
-
-import { useDispatch } from 
-'react-redux';
-
-
-// verifyToken - Checks if stored JWT token is still valid
-// If token expired → auto logout, if valid → restore user session
+import FloatingCTA from './components/common/FloatingCTA/FloatingCTA';
 import { verifyToken } from './redux/slices/authSlice';
 
+// Simple offline banner component (inline)
+const OfflineBanner = () => (
+  <div
+    style={{
+      backgroundColor: '#ff9800',
+      color: '#fff',
+      textAlign: 'center',
+      padding: '0.5rem',
+      fontWeight: 'bold',
+    }}
+  >
+    ⚠️ You are offline. Some features may not work.
+  </div>
+);
+
 function App() {
-  console.log('VITE_API_URL is:', import.meta.env.VITE_API_URL);
+  // Only log in development
+  if (import.meta.env.DEV) {
+    console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
+  }
 
-
-
-  // Get dispatch function
-  // // Used to send Redux actions (like verifyToken)
-  // const dispatch = useDispatch()
   const dispatch = useDispatch();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // Only verify if a token actually exists – prevents 401 loop on first load
     const token = localStorage.getItem('token');
     if (token) {
       dispatch(verifyToken());
     }
   }, [dispatch]);
 
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
+      {!isOnline && <OfflineBanner />}
       <Navbar />
       <main style={{ minHeight: '80vh' }}>
         <AppRoutes />
       </main>
       <Footer />
+      <FloatingCTA />
     </BrowserRouter>
   );
 }
 
 export default App;
-
 
 
 // useEffect - Runs code when component mounts (used for token verification)

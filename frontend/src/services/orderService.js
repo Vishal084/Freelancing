@@ -10,4 +10,9 @@ const getUserOrders = async () => {
   return response.data;
 };
 
-export default { placeOrder, getUserOrders };
+const cancelOrder = async (orderId) => {
+  const response = await api.patch(`/orders/${orderId}/cancel`);
+  return response.data;
+};
+
+export default { placeOrder, getUserOrders, cancelOrder };

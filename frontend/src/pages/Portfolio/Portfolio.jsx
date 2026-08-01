@@ -1,6 +1,7 @@
 // frontend/src/pages/Portfolio/Portfolio.jsx
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Helmet } from 'react-helmet-async';
 import {
   fetchProjects,
   selectAllProjects,
@@ -26,47 +27,57 @@ const Portfolio = () => {
   const handleRetry = () => setRetryTrigger((prev) => !prev);
 
   return (
-    <main className="container portfolio-page" aria-labelledby="portfolio-heading">
-      <h1 id="portfolio-heading">Our Portfolio</h1>
+    <>
+      <Helmet>
+        <title>Portfolio – FreelancePro</title>
+        <meta
+          name="description"
+          content="Explore our latest projects: websites, web apps, and mobile apps. See how we turn ideas into stunning digital products."
+        />
+      </Helmet>
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="section-loading" role="status">
-          <div className="spinner" aria-hidden="true"></div>
-          <p>Loading projects...</p>
-        </div>
-      )}
+      <main className="container portfolio-page" aria-labelledby="portfolio-heading">
+        <h1 id="portfolio-heading">Our Portfolio</h1>
 
-      {/* Error state */}
-      {!isLoading && error && (
-        <div className="section-error" role="alert">
-          <p>⚠️ Failed to load projects. Please try again later.</p>
-          <button onClick={handleRetry} className="btn btn-secondary">
-            Retry
-          </button>
-        </div>
-      )}
+        {/* Loading state */}
+        {isLoading && (
+          <div className="section-loading" role="status">
+            <div className="spinner" aria-hidden="true"></div>
+            <p>Loading projects...</p>
+          </div>
+        )}
 
-      {/* Normal state: projects found */}
-      {!isLoading && !error && projects.length > 0 && (
-        <div className="projects-grid">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
-      )}
+        {/* Error state */}
+        {!isLoading && error && (
+          <div className="section-error" role="alert">
+            <p>⚠️ Failed to load projects. Please try again later.</p>
+            <button onClick={handleRetry} className="btn btn-secondary">
+              Retry
+            </button>
+          </div>
+        )}
 
-      {/* Empty state: no projects in database */}
-      {!isLoading && !error && projects.length === 0 && (
-        <div className="section-empty">
-          <p>No projects to display right now.</p>
-          <p>
-            Check back soon or{' '}
-            <a href="/contact">get in touch</a> to discuss your project.
-          </p>
-        </div>
-      )}
-    </main>
+        {/* Normal state: projects found */}
+        {!isLoading && !error && projects.length > 0 && (
+          <div className="projects-grid">
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        )}
+
+        {/* Empty state: no projects in database */}
+        {!isLoading && !error && projects.length === 0 && (
+          <div className="section-empty">
+            <p>No projects to display right now.</p>
+            <p>
+              Check back soon or{' '}
+              <a href="/contact">get in touch</a> to discuss your project.
+            </p>
+          </div>
+        )}
+      </main>
+    </>
   );
 };
 
