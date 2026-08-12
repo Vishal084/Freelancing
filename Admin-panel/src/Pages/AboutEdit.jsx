@@ -1,6 +1,7 @@
+// admin-panel/src/pages/AboutEdit.jsx
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAbout, updateAbout } from '../redux/slices/aboutSlice';  // ← changed saveAbout → updateAbout
+import { fetchAbout, updateAbout } from '../redux/slices/aboutSlice'; // matches import name
 
 const AboutEdit = () => {
   const dispatch = useDispatch();
@@ -14,13 +15,20 @@ const AboutEdit = () => {
   });
 
   useEffect(() => { dispatch(fetchAbout()); }, [dispatch]);
+
   useEffect(() => {
     if (data) {
+      // Convert expertise array to comma string for easy editing
+      const processedTeamMembers = (data.teamMembers || []).map(member => ({
+        ...member,
+        expertise: Array.isArray(member.expertise) ? member.expertise.join(', ') : (member.expertise || '')
+      }));
+
       setForm({
         mission: data.mission || '',
         vision: data.vision || '',
         coreValues: data.coreValues || [],
-        teamMembers: data.teamMembers || [],
+        teamMembers: processedTeamMembers,
         milestones: data.milestones || [],
       });
     }
@@ -43,7 +51,19 @@ const AboutEdit = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(updateAbout(form));   // ← matches import
+
+    // Convert expertise string back to array for each team member
+    const payload = {
+      ...form,
+      teamMembers: form.teamMembers.map(member => ({
+        ...member,
+        expertise: typeof member.expertise === 'string'
+          ? member.expertise.split(',').map(s => s.trim()).filter(Boolean)
+          : member.expertise  // fallback if already array
+      }))
+    };
+
+    dispatch(updateAbout(payload));
   };
 
   return (
@@ -57,6 +77,7 @@ const AboutEdit = () => {
         <label>Vision:</label>
         <textarea value={form.vision} onChange={e => setForm({...form, vision: e.target.value})} />
 
+        {/* ====== Core Values ====== */}
         <h3>Core Values</h3>
         {form.coreValues.map((cv, i) => (
           <div key={i} className="array-item">
@@ -69,18 +90,49 @@ const AboutEdit = () => {
         ))}
         <button type="button" onClick={() => addItem('coreValues', { icon: '', title: '', description: '', color: '' })}>Add Value</button>
 
+        {/* ====== Team Members ====== */}
         <h3>Team Members</h3>
         {form.teamMembers.map((member, i) => (
           <div key={i} className="array-item">
-            <input placeholder="Name" value={member.name} onChange={e => handleArrayChange('teamMembers', i, 'name', e.target.value)} />
-            <input placeholder="Role" value={member.role} onChange={e => handleArrayChange('teamMembers', i, 'role', e.target.value)} />
-            <input placeholder="Image URL" value={member.image} onChange={e => handleArrayChange('teamMembers', i, 'image', e.target.value)} />
-            <textarea placeholder="Bio" value={member.bio} onChange={e => handleArrayChange('teamMembers', i, 'bio', e.target.value)} />
+            <input
+              placeholder="Name"
+              value={member.name}
+              onChange={e => handleArrayChange('teamMembers', i, 'name', e.target.value)}
+            />
+            <input
+              placeholder="Role"
+              value={member.role}
+              onChange={e => handleArrayChange('teamMembers', i, 'role', e.target.value)}
+            />
+            <input
+              placeholder="Image URL"
+              value={member.image}
+              onChange={e => handleArrayChange('teamMembers', i, 'image', e.target.value)}
+            />
+            <textarea
+              placeholder="Bio"
+              value={member.bio}
+              onChange={e => handleArrayChange('teamMembers', i, 'bio', e.target.value)}
+            />
+            {/* ✅ NEW: Expertise field (comma separated) */}
+            <input
+              placeholder="Expertise (comma separated, e.g. React, Node, MongoDB)"
+              value={member.expertise || ''}
+              onChange={e => handleArrayChange('teamMembers', i, 'expertise', e.target.value)}
+            />
             <button type="button" onClick={() => removeItem('teamMembers', i)}>Remove</button>
           </div>
         ))}
-        <button type="button" onClick={() => addItem('teamMembers', { name: '', role: '', image: '', bio: '' })}>Add Member</button>
+        <button
+          type="button"
+          onClick={() =>
+            addItem('teamMembers', { name: '', role: '', image: '', bio: '', expertise: '' })
+          }
+        >
+          Add Member
+        </button>
 
+        {/* ====== Milestones ====== */}
         <h3>Milestones</h3>
         {form.milestones.map((milestone, i) => (
           <div key={i} className="array-item">

@@ -13,6 +13,8 @@ import UsersManage from './Pages/UsersManage';
 import BlogManage from './Pages/BlogManage';
 import TestimonialsManage from './Pages/TestimonialsManage';
 import FAQManage from './Pages/FAQManage';
+import SiteSettings from './pages/SiteSettings';
+
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="blogs" element={<BlogManage />} />
           <Route path="testimonials" element={<TestimonialsManage />} />
           <Route path="faqs" element={<FAQManage />} />
+                    <Route path="settings" element={<SiteSettings />} />
+
         </Route>
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>

@@ -1,5 +1,5 @@
 // frontend/src/pages/About/About.jsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -11,10 +11,12 @@ import {
 } from '../../redux/slices/aboutSlice';
 import {
   fetchTestimonials,
+  submitTestimonial,
   selectTestimonials,
   selectTestimonialsLoading,
   selectTestimonialsError,
 } from '../../redux/slices/testimonialSlice';
+import api from '../../services/api';
 import './About.css';
 
 const AboutPage = () => {
@@ -27,11 +29,22 @@ const AboutPage = () => {
   const testimonialsLoading = useSelector(selectTestimonialsLoading);
   const testimonialsError = useSelector(selectTestimonialsError);
 
+  // ---- Testimonial submission form state ----
+  const [testimonialForm, setTestimonialForm] = useState({
+    name: '',
+    quote: '',
+    role: '',
+  });
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch only when data is missing
   useEffect(() => {
-    dispatch(fetchAboutData());
-    dispatch(fetchTestimonials());
+    if (!aboutData) dispatch(fetchAboutData());
+    if (testimonials.length === 0) dispatch(fetchTestimonials());
     window.scrollTo(0, 0);
-  }, [dispatch]);
+  }, [dispatch, aboutData, testimonials.length]);
 
   // Image fallback handler
   const handleImageError = (e) => {
@@ -42,6 +55,32 @@ const AboutPage = () => {
       return;
     }
     e.target.src = '/images/fallback-person.jpg';
+  };
+
+  // ---- Handle testimonial submission ----
+  const handleTestimonialSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitError('');
+    setSubmitting(true);
+    try {
+      await dispatch(submitTestimonial(testimonialForm)).unwrap();
+      setTestimonialForm({ name: '', quote: '', role: '' });
+      setSubmitSuccess(true);
+      setTimeout(() => setSubmitSuccess(false), 5000);
+      // Refresh the list (new testimonial might not appear until approved)
+      dispatch(fetchTestimonials());
+    } catch (err) {
+      setSubmitError(
+        err || 'Failed to submit testimonial. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle input change for testimonial form
+  const handleTestimonialChange = (e) => {
+    setTestimonialForm({ ...testimonialForm, [e.target.name]: e.target.value });
   };
 
   // Loading state
@@ -79,7 +118,10 @@ const AboutPage = () => {
     );
   }
 
-  const { coreValues, teamMembers, milestones } = aboutData;
+  // Safe destructuring with fallback arrays
+  const coreValues = aboutData?.coreValues ?? [];
+  const teamMembers = aboutData?.teamMembers ?? [];
+  const milestones = aboutData?.milestones ?? [];
 
   // Stats: dynamic from API, fallback to static
   const stats = aboutData.stats || [
@@ -137,7 +179,7 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* ======== MISSION & VISION (static) ======== */}
+        {/* ======== MISSION & VISION (dynamic) ======== */}
         <section id="story" className="about-mission-vision" aria-labelledby="mv-heading">
           <div className="container">
             <h2 id="mv-heading" className="sr-only">Mission & Vision</h2>
@@ -148,8 +190,8 @@ const AboutPage = () => {
                 </div>
                 <h2>Our Mission</h2>
                 <p>
-                  To empower businesses with innovative digital solutions that enhance their online presence,
-                  streamline operations, and accelerate growth in the ever-evolving digital landscape.
+                  {aboutData.mission ||
+                    'To empower businesses with innovative digital solutions that enhance their online presence, streamline operations, and accelerate growth in the ever-evolving digital landscape.'}
                 </p>
                 <ul className="about-mv-list">
                   <li>✅ Deliver exceptional value</li>
@@ -165,8 +207,8 @@ const AboutPage = () => {
                 </div>
                 <h2>Our Vision</h2>
                 <p>
-                  To become the most trusted digital partner for businesses worldwide, recognized for our
-                  technical excellence, creative innovation, and unwavering commitment to client success.
+                  {aboutData.vision ||
+                    'To become the most trusted digital partner for businesses worldwide, recognized for our technical excellence, creative innovation, and unwavering commitment to client success.'}
                 </p>
                 <div className="about-vision-points">
                   <div className="vision-point">
@@ -287,12 +329,55 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* ======== TESTIMONIALS (dynamic with loading/error) ======== */}
+        {/* ======== TESTIMONIALS (dynamic with loading/error + submit form) ======== */}
         <section id="testimonials" className="about-testimonials" aria-labelledby="testimonials-heading">
           <div className="container">
             <div className="section-header">
               <h2 id="testimonials-heading">What Our Clients Say</h2>
               <p>Trusted by businesses worldwide</p>
+            </div>
+
+            {/* Testimonial submission form */}
+            <div className="testimonial-submit">
+              <h3>Share Your Experience</h3>
+              {submitSuccess && (
+                <div className="success-message" role="status">
+                  ✅ Thank you for your testimonial! It will appear once approved.
+                </div>
+              )}
+              {submitError && (
+                <div className="error-message" role="alert">
+                  {submitError}
+                </div>
+              )}
+              <form onSubmit={handleTestimonialSubmit} className="testimonial-form">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your Name *"
+                  value={testimonialForm.name}
+                  onChange={handleTestimonialChange}
+                  required
+                />
+                <textarea
+                  name="quote"
+                  placeholder="Your Feedback *"
+                  value={testimonialForm.quote}
+                  onChange={handleTestimonialChange}
+                  required
+                  rows={3}
+                />
+                <input
+                  type="text"
+                  name="role"
+                  placeholder="Your Role/Company (optional)"
+                  value={testimonialForm.role}
+                  onChange={handleTestimonialChange}
+                />
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit Testimonial'}
+                </button>
+              </form>
             </div>
 
             {testimonialsLoading && (
@@ -316,7 +401,7 @@ const AboutPage = () => {
                 <div key={i} className="testimonial-card">
                   <p className="testimonial-text">“{t.quote}”</p>
                   <div className="testimonial-author">
-                    <strong>{t.name}</strong>, {t.company}
+                    <strong>{t.name}</strong>, {t.company || t.role}
                   </div>
                 </div>
               ))}

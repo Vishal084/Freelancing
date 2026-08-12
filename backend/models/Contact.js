@@ -14,7 +14,7 @@ const contactSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = ret._id;
-        delete ret._id;
+        // _id kept
         delete ret.__v;
         return ret;
       },

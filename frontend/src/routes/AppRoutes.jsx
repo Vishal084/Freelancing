@@ -17,7 +17,9 @@ const Portfolio = React.lazy(() => import('../pages/Portfolio/Portfolio'));
 const Services = React.lazy(() => import('../pages/Services/Services'));
 const UserDashboard = React.lazy(() => import('../pages/Dashboard/UserDashboard'));
 const Blog = React.lazy(() => import('../pages/Blog/Blog'));
+const BlogPost = React.lazy(() => import('../pages/Blog/BlogPost')); // ✅ new
 const NotFound = React.lazy(() => import('../pages/NotFound/NotFound'));
+const FAQ = React.lazy(() => import('../pages/FAQ/FAQ'));
 
 // Placeholder component for inactive pages
 const Placeholder = React.lazy(() => import('../pages/Placeholder'));
@@ -55,13 +57,16 @@ const AppRoutes = () => (
       <Route path="/portfolio" element={<RouteWithErrorBoundary><Portfolio /></RouteWithErrorBoundary>} />
       <Route path="/services" element={<RouteWithErrorBoundary><Services /></RouteWithErrorBoundary>} />
       <Route path="/blog" element={<RouteWithErrorBoundary><Blog /></RouteWithErrorBoundary>} />
+      <Route path="/blog/:slug" element={<RouteWithErrorBoundary><BlogPost /></RouteWithErrorBoundary>} />  {/* ✅ new */}
+      <Route path="/faq" element={<RouteWithErrorBoundary><FAQ /></RouteWithErrorBoundary>} />
+
       <Route path="/dashboard" element={
         <RouteWithErrorBoundary>
           <ProtectedRoute><UserDashboard /></ProtectedRoute>
         </RouteWithErrorBoundary>
       } />
 
-      {/* Footer placeholder routes – no more 404s */}
+      {/* Footer placeholder routes */}
       <Route path="/careers" element={<RouteWithErrorBoundary><Placeholder title="Careers" /></RouteWithErrorBoundary>} />
       <Route path="/support" element={<RouteWithErrorBoundary><Placeholder title="Support" /></RouteWithErrorBoundary>} />
       <Route path="/privacy" element={<RouteWithErrorBoundary><Placeholder title="Privacy Policy" /></RouteWithErrorBoundary>} />

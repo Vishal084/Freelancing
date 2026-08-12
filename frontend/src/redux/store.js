@@ -1,10 +1,15 @@
-import { configureStore } from '@reduxjs/toolkit'
-import authReducer from './slices/authSlice'
-import serviceReducer from './slices/serviceSlice'
-import orderReducer from './slices/orderSlice'
-import projectReducer from './slices/projectSlice'
-import aboutReducer from './slices/aboutSlice'
-import testimonialReducer from './slices/testimonialSlice' // ✅ new
+// frontend/src/redux/store.js – add the import and reducer
+import { configureStore } from '@reduxjs/toolkit';
+import authReducer from './slices/authSlice';
+import serviceReducer from './slices/serviceSlice';
+import orderReducer from './slices/orderSlice';
+import projectReducer from './slices/projectSlice';
+import aboutReducer from './slices/aboutSlice';
+import testimonialReducer from './slices/testimonialSlice';
+import blogReducer from './slices/blogSlice';
+import faqReducer from './slices/faqSlice';
+import siteSettingsReducer from './slices/siteSettingsSlice';
+
 
 export const store = configureStore({
   reducer: {
@@ -13,9 +18,13 @@ export const store = configureStore({
     orders: orderReducer,
     projects: projectReducer,
     about: aboutReducer,
-    testimonials: testimonialReducer, // ✅ new
+    testimonials: testimonialReducer,
+    blogs: blogReducer,
+    faqs: faqReducer,   // ← add this
+    siteSettings: siteSettingsReducer,
+
   },
-})
+});
 
 
 

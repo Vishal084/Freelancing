@@ -4,7 +4,7 @@ import { fetchProjects, addProject, editProject, removeProject } from '../redux/
 
 const ProjectsManage = () => {
   const dispatch = useDispatch();
-  const { list, isLoading } = useSelector(state => state.projects);
+  const { list, isLoading, error } = useSelector(state => state.projects);
   const [form, setForm] = useState({ title: '', category: '', description: '', image: '' });
   const [editId, setEditId] = useState(null);
 
@@ -22,13 +22,21 @@ const ProjectsManage = () => {
   };
 
   const handleEdit = (project) => {
-    setForm({ title: project.title, category: project.category, description: project.description, image: project.image });
-    setEditId(project.id);
+    setForm({
+      title: project.title,
+      category: project.category,
+      description: project.description,
+      image: project.image
+    });
+    setEditId(project._id);
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Delete this project?')) dispatch(removeProject(id));
   };
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
 
   return (
     <div>
@@ -42,31 +50,24 @@ const ProjectsManage = () => {
         {editId && <button type="button" onClick={() => { setEditId(null); setForm({ title: '', category: '', description: '', image: '' }); }}>Cancel</button>}
       </form>
 
-      {isLoading ? <p>Loading...</p> : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Image</th>
-              <th>Actions</th>
+      <table className="data-table">
+        <thead>
+          <tr><th>Title</th><th>Category</th><th>Image</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {list.map(project => (
+            <tr key={project._id}>
+              <td>{project.title}</td>
+              <td>{project.category}</td>
+              <td><img src={project.image} alt={project.title} height="50" /></td>
+              <td>
+                <button onClick={() => handleEdit(project)}>Edit</button>
+                <button onClick={() => handleDelete(project._id)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {list.map(project => (
-              <tr key={project.id}>
-                <td>{project.title}</td>
-                <td>{project.category}</td>
-                <td><img src={project.image} alt={project.title} height="50" /></td>
-                <td>
-                  <button onClick={() => handleEdit(project)}>Edit</button>
-                  <button onClick={() => handleDelete(project.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

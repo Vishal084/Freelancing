@@ -1,5 +1,7 @@
 // frontend/src/pages/NotFound/NotFound.jsx
 import { Link } from 'react-router-dom';
+import './NotFound.css';
+
 
 const NotFound = () => (
   <main className="container" style={{ textAlign: 'center', paddingTop: '4rem' }}>

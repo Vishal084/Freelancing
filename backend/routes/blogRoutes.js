@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getBlogs } = require('../controllers/blogControllerAdmin');   // ← fixed
+const { getPublishedBlogs, getBlogBySlug } = require('../controllers/blogControllerAdmin');
 
-// GET /api/blogs – list all blog posts
-router.get('/', getBlogs);
+// GET /api/blogs – list only published blog posts
+router.get('/', getPublishedBlogs);
+
+// ✅ NEW: GET /api/blogs/:slug – single published blog post by slug
+router.get('/:slug', getBlogBySlug);
 
 module.exports = router;

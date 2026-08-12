@@ -1,5 +1,5 @@
 // frontend/src/components/common/Navbar/Navbar.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, selectCurrentUser } from '../../../redux/slices/authSlice';
@@ -12,43 +12,82 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Refs for focus trap elements
+  const hamburgerRef = useRef(null);
+  const menuRef = useRef(null);
+  const firstFocusableRef = useRef(null);   // first real link
+  const lastFocusableRef = useRef(null);    // last real link
+  const trapStartRef = useRef(null);        // visually hidden start button
+  const trapEndRef = useRef(null);          // visually hidden end button
+
   const handleLogout = () => {
     dispatch(logout());
     setIsMenuOpen(false);
     navigate('/');
   };
 
-  const closeMenu = () => setIsMenuOpen(false);
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+    hamburgerRef.current?.focus();   // return focus to hamburger
+  };
 
-  // ✅ Active route helper
   const isActive = (path) => (location.pathname === path ? 'nav-active' : '');
 
-  // ✅ Close menu on Escape key
+  // Close menu on Escape
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
+        hamburgerRef.current?.focus();
       }
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // ✅ Scroll lock & focus trap when mobile menu is open
+  // Scroll lock & focus trap
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
-      // Small delay to allow the DOM to update, then focus the first link
-      setTimeout(() => {
-        const firstLink = document.querySelector('.nav-links.active a');
-        firstLink?.focus();
-      }, 0);
+      // Focus the first real link after a tiny delay to allow the menu to render
+      const timeout = setTimeout(() => {
+        firstFocusableRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timeout);
     } else {
       document.body.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
     };
+  }, [isMenuOpen]);
+
+  // Focus trap: loop Tab inside menu
+  useEffect(() => {
+    const handleTab = (e) => {
+      if (!isMenuOpen) return;
+      const trapStart = trapStartRef.current;
+      const trapEnd = trapEndRef.current;
+      if (!trapStart || !trapEnd) return;
+
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          // Shift+Tab: if focus is on trapStart, move to last real focusable
+          if (document.activeElement === trapStart) {
+            e.preventDefault();
+            lastFocusableRef.current?.focus();
+          }
+        } else {
+          // Tab: if focus is on trapEnd, move to first real focusable
+          if (document.activeElement === trapEnd) {
+            e.preventDefault();
+            firstFocusableRef.current?.focus();
+          }
+        }
+      }
+    };
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
   }, [isMenuOpen]);
 
   return (
@@ -59,6 +98,7 @@ const Navbar = () => {
         </Link>
 
         <button
+          ref={hamburgerRef}
           className="hamburger"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle navigation menu"
@@ -69,29 +109,65 @@ const Navbar = () => {
           <span></span>
         </button>
 
-        <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
+        <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`} ref={menuRef}>
+          {/* Visually hidden button – first element in focus trap */}
+          <li className="visually-hidden-focusable">
+            <button
+              ref={trapStartRef}
+              onClick={() => lastFocusableRef.current?.focus()}
+              aria-hidden="true"
+              tabIndex={isMenuOpen ? 0 : -1}
+            ></button>
+          </li>
+
           <li>
-            <Link to="/" className={isActive('/')} onClick={closeMenu}>
+            <Link
+              to="/"
+              className={isActive('/')}
+              onClick={closeMenu}
+              ref={firstFocusableRef}
+              aria-current={location.pathname === '/' ? 'page' : undefined}
+            >
               Home
             </Link>
           </li>
           <li>
-            <Link to="/services" className={isActive('/services')} onClick={closeMenu}>
+            <Link
+              to="/services"
+              className={isActive('/services')}
+              onClick={closeMenu}
+              aria-current={location.pathname === '/services' ? 'page' : undefined}
+            >
               Services
             </Link>
           </li>
           <li>
-            <Link to="/portfolio" className={isActive('/portfolio')} onClick={closeMenu}>
+            <Link
+              to="/portfolio"
+              className={isActive('/portfolio')}
+              onClick={closeMenu}
+              aria-current={location.pathname === '/portfolio' ? 'page' : undefined}
+            >
               Portfolio
             </Link>
           </li>
           <li>
-            <Link to="/about" className={isActive('/about')} onClick={closeMenu}>
+            <Link
+              to="/about"
+              className={isActive('/about')}
+              onClick={closeMenu}
+              aria-current={location.pathname === '/about' ? 'page' : undefined}
+            >
               About
             </Link>
           </li>
           <li>
-            <Link to="/contact" className={isActive('/contact')} onClick={closeMenu}>
+            <Link
+              to="/contact"
+              className={isActive('/contact')}
+              onClick={closeMenu}
+              aria-current={location.pathname === '/contact' ? 'page' : undefined}
+            >
               Contact
             </Link>
           </li>
@@ -102,12 +178,13 @@ const Navbar = () => {
                   to="/dashboard"
                   className={isActive('/dashboard')}
                   onClick={closeMenu}
+                  aria-current={location.pathname === '/dashboard' ? 'page' : undefined}
                 >
                   Dashboard
                 </Link>
               </li>
               <li>
-                <button onClick={handleLogout} className="btn-logout">
+                <button onClick={handleLogout} className="btn-logout" type="button">
                   Logout
                 </button>
               </li>
@@ -115,17 +192,38 @@ const Navbar = () => {
           ) : (
             <>
               <li>
-                <Link to="/login" className={isActive('/login')} onClick={closeMenu}>
+                <Link
+                  to="/login"
+                  className={isActive('/login')}
+                  onClick={closeMenu}
+                  aria-current={location.pathname === '/login' ? 'page' : undefined}
+                >
                   Login
                 </Link>
               </li>
               <li>
-                <Link to="/signup" className={isActive('/signup')} onClick={closeMenu}>
+                <Link
+                  to="/signup"
+                  className={isActive('/signup')}
+                  onClick={closeMenu}
+                  aria-current={location.pathname === '/signup' ? 'page' : undefined}
+                  ref={lastFocusableRef}
+                >
                   Signup
                 </Link>
               </li>
             </>
           )}
+
+          {/* Visually hidden button – last element in focus trap */}
+          <li className="visually-hidden-focusable">
+            <button
+              ref={trapEndRef}
+              onClick={() => firstFocusableRef.current?.focus()}
+              aria-hidden="true"
+              tabIndex={isMenuOpen ? 0 : -1}
+            ></button>
+          </li>
         </ul>
       </div>
     </nav>

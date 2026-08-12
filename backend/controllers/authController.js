@@ -50,7 +50,8 @@ const login = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    // Only return safe, necessary fields
+    const user = await User.findById(req.user.id).select('name email isAdmin isBanned createdAt');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

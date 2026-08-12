@@ -8,6 +8,10 @@ import {
   selectServicesLoading,
   selectServicesError,
 } from '../../redux/slices/serviceSlice';
+import {
+  fetchSiteSettings,
+  selectSiteSettings,
+} from '../../redux/slices/siteSettingsSlice';
 import { submitContactForm } from '../../services/contactService';
 import './Contact.css';
 
@@ -40,6 +44,9 @@ const ContactPage = () => {
   const servicesList = useSelector(selectAllServices);
   const servicesLoading = useSelector(selectServicesLoading);
   const servicesError = useSelector(selectServicesError);
+
+  // 🔄 Site settings from backend
+  const siteSettings = useSelector(selectSiteSettings);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -74,10 +81,12 @@ const ContactPage = () => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
   }, [formData]);
 
+  // Fetch services & site settings on mount
   useEffect(() => {
     if (!servicesList.length) {
       dispatch(fetchServices());
     }
+    dispatch(fetchSiteSettings());
   }, [dispatch, servicesList.length]);
 
   const handleSubmit = async (e) => {
@@ -147,8 +156,6 @@ const ContactPage = () => {
       setError(message);
     } finally {
       setLoading(false);
-      // Update rate limit counters only on successful submission or after an attempt?
-      // We'll count every submission attempt (success or fail) to prevent abuse.
       setSubmitCount((prev) => prev + 1);
       setLastSubmitTime(now);
     }
@@ -173,6 +180,15 @@ const ContactPage = () => {
       [e.target.name]: e.target.value,
     });
   };
+
+  // ─── Dynamic contact info (from site settings, with fallback) ─────────────────
+  const phone = siteSettings?.phone || '+1 (555) 123-4567';
+  const email = siteSettings?.email || 'hello@techagency.com';
+  const addressLine = siteSettings
+    ? `${siteSettings.address}, ${siteSettings.city}, ${siteSettings.state} ${siteSettings.zip}`
+    : '123 Tech Street, San Francisco, CA 94107';
+  const workingHours = siteSettings?.workingHours || 'Mon-Fri 9am-6pm';
+  const socialLinks = siteSettings?.socialLinks || {};
 
   return (
     <>
@@ -212,15 +228,15 @@ const ContactPage = () => {
                     <div className="contact-icon phone-icon" aria-hidden="true">📞</div>
                     <div>
                       <h3>Phone</h3>
-                      <p>+1 (555) 123-4567</p>
-                      <span className="contact-sub">Mon-Fri 9am-6pm</span>
+                      <p>{phone}</p>
+                      <span className="contact-sub">{workingHours}</span>
                     </div>
                   </div>
                   <div className="contact-item">
                     <div className="contact-icon email-icon" aria-hidden="true">✉️</div>
                     <div>
                       <h3>Email</h3>
-                      <p>hello@techagency.com</p>
+                      <p>{email}</p>
                       <span className="contact-sub">Response within 24 hours</span>
                     </div>
                   </div>
@@ -228,18 +244,30 @@ const ContactPage = () => {
                     <div className="contact-icon location-icon" aria-hidden="true">📍</div>
                     <div>
                       <h3>Office</h3>
-                      <p>123 Tech Street</p>
-                      <span className="contact-sub">San Francisco, CA 94107</span>
+                      <p>{addressLine}</p>
                     </div>
                   </div>
                 </div>
+
+                {/* Social links from backend */}
                 <div className="contact-social">
                   <h3>Follow Us</h3>
                   <div className="social-links">
-                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Twitter">🐦</a>
-                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="LinkedIn">💼</a>
-                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="GitHub">🐙</a>
-                    <a href="https://dribbble.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Dribbble">🎨</a>
+                    {socialLinks.twitter && (
+                      <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Twitter">🐦</a>
+                    )}
+                    {socialLinks.linkedin && (
+                      <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="LinkedIn">💼</a>
+                    )}
+                    {socialLinks.github && (
+                      <a href={socialLinks.github} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="GitHub">🐙</a>
+                    )}
+                    {socialLinks.dribbble && (
+                      <a href={socialLinks.dribbble} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Dribbble">🎨</a>
+                    )}
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Instagram">📷</a>
+                    )}
                   </div>
                 </div>
               </div>

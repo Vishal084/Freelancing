@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { createOrder, getUserOrders } = require('../controllers/orderController');
+const { createOrder, getUserOrders, cancelOrder } = require('../controllers/orderController'); // ← added cancelOrder
 const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
 
@@ -20,5 +20,8 @@ router.post(
 );
 
 router.get('/user/me', protect, getUserOrders);
+
+// ✅ NEW: Cancel an order
+router.patch('/:id/cancel', protect, cancelOrder);
 
 module.exports = router;

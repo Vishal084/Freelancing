@@ -10,6 +10,8 @@ import ordersReducer from './slices/ordersSlice';
 import contactsReducer from './slices/contactsSlice';
 import usersReducer from './slices/usersSlice';
 import aboutReducer from './slices/aboutSlice';
+import siteSettingsReducer from './slices/siteSettingsSlice';
+
 
 export const store = configureStore({
   reducer: {
@@ -24,5 +26,7 @@ export const store = configureStore({
     contacts: contactsReducer,
     users: usersReducer,
     about: aboutReducer,
+        siteSettings: siteSettingsReducer,   // ← add
+
   },
 });

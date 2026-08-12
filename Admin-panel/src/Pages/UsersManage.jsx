@@ -4,36 +4,25 @@ import { fetchUsers, removeUser, banUser, adminUser } from '../redux/slices/user
 
 const UsersManage = () => {
   const dispatch = useDispatch();
-  const { list, isLoading } = useSelector(state => state.users);
+  const { list, isLoading, error } = useSelector(state => state.users);
   useEffect(() => { dispatch(fetchUsers()); }, [dispatch]);
 
   const handleDelete = (id) => {
     if (window.confirm('Delete this user permanently?')) dispatch(removeUser(id));
   };
 
-  const handleBanToggle = (id) => {
-    dispatch(banUser(id));
-  };
-
-  const handleAdminToggle = (id) => {
-    dispatch(adminUser(id));
-  };
+  const handleBanToggle = (id) => { dispatch(banUser(id)); };
+  const handleAdminToggle = (id) => { dispatch(adminUser(id)); };
 
   if (isLoading) return <p>Loading users...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
 
   return (
     <div>
       <h2>User Management</h2>
       <table className="data-table">
         <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Admin</th>
-            <th>Banned</th>
-            <th>Joined</th>
-            <th>Actions</th>
-          </tr>
+          <tr><th>Name</th><th>Email</th><th>Admin</th><th>Banned</th><th>Joined</th><th>Actions</th></tr>
         </thead>
         <tbody>
           {list.map(user => (
@@ -59,4 +48,5 @@ const UsersManage = () => {
     </div>
   );
 };
+
 export default UsersManage;

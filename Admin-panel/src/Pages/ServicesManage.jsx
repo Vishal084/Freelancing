@@ -23,43 +23,57 @@ const ServicesManage = () => {
   };
 
   const handleEdit = (service) => {
-    setForm({ name: service.name, description: service.description, price: service.price, icon: service.icon });
-    setEditId(service.id);
+    setForm({
+      name: service.name,
+      description: service.description,
+      price: service.price,
+      icon: service.icon
+    });
+    setEditId(service._id);
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Delete?')) dispatch(deleteService(id));
   };
 
+  if (isLoading) return <p>Loading services...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
+
   return (
     <div>
       <h2>Services Management</h2>
       <form onSubmit={handleSubmit} className="crud-form">
-        <input placeholder="Name" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
-        <input placeholder="Description" value={form.description} onChange={e=>setForm({...form, description:e.target.value})} required />
-        <input placeholder="Price" type="number" value={form.price} onChange={e=>setForm({...form, price:e.target.value})} required />
-        <input placeholder="Icon (emoji)" value={form.icon} onChange={e=>setForm({...form, icon:e.target.value})} required />
+        <input placeholder="Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+        <input placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} required />
+        <input placeholder="Price" type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+        <input placeholder="Icon (emoji)" value={form.icon} onChange={e => setForm({ ...form, icon: e.target.value })} required />
         <button type="submit">{editId ? 'Update' : 'Add'} Service</button>
+        {editId && (
+          <button type="button" onClick={() => { setEditId(null); setForm({ name: '', description: '', price: '', icon: '' }); }}>
+            Cancel
+          </button>
+        )}
       </form>
 
-      {isLoading ? <p>Loading...</p> : (
-        <table className="data-table">
-          <thead><tr><th>Name</th><th>Price</th><th>Actions</th></tr></thead>
-          <tbody>
-            {list.map(s => (
-              <tr key={s.id}>
-                <td>{s.name}</td>
-                <td>${s.price}</td>
-                <td>
-                  <button onClick={() => handleEdit(s)}>Edit</button>
-                  <button onClick={() => handleDelete(s.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <table className="data-table">
+        <thead>
+          <tr><th>Name</th><th>Price</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {list.map(s => (
+            <tr key={s._id}>
+              <td>{s.name}</td>
+              <td>${s.price}</td>
+              <td>
+                <button onClick={() => handleEdit(s)}>Edit</button>
+                <button onClick={() => handleDelete(s._id)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
+
 export default ServicesManage;

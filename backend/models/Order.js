@@ -11,7 +11,11 @@ const orderSchema = new mongoose.Schema(
     serviceName: { type: String, required: true },
     details: { type: String, required: true },
     price: { type: Number, required: true },
-    status: { type: String, default: 'pending' },
+    status: {
+      type: String,
+      enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true,
@@ -19,7 +23,6 @@ const orderSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = ret._id;
-        delete ret._id;        // ← add this
         delete ret.__v;
         return ret;
       },

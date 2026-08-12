@@ -10,11 +10,14 @@ const Login = () => {
   const navigate = useNavigate();
   const { isLoading, error } = useSelector(state => state.auth);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(loginAdmin({ email, password })).then(res => {
-      if (!res.error) navigate('/admin');
-    });
+    try {
+      await dispatch(loginAdmin({ email, password })).unwrap();
+      navigate('/admin');
+    } catch (err) {
+      // error already handled by Redux state, no extra action needed
+    }
   };
 
   return (
@@ -22,11 +25,12 @@ const Login = () => {
       <form onSubmit={handleSubmit} className="login-form">
         <h1>Admin Login</h1>
         {error && <div className="error">{error}</div>}
-        <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required />
+        <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
         <button type="submit" disabled={isLoading}>{isLoading ? 'Logging in...' : 'Login'}</button>
       </form>
     </div>
   );
 };
+
 export default Login;

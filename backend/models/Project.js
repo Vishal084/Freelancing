@@ -13,7 +13,6 @@ const projectSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = ret._id;
-        delete ret._id;
         delete ret.__v;
         return ret;
       },
@@ -21,4 +20,10 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
+// module.exports = {
+//   getProjects,
+//   createProject,
+//   updateProject,
+//   deleteProject,
+// };
 module.exports = mongoose.model('Project', projectSchema);

@@ -16,26 +16,15 @@ const userSchema = new mongoose.Schema(
       required: [true, 'Please add a password'],
       minlength: 6,
       select: false,
-      
     },
-
     isAdmin: {
-  type: Boolean,
-  default: false,
-} ,
-
-
-
-// isAdmin: {
-//   type: Boolean,
-//   default: false,
-// }   this is for admin users, if you want to create an admin user, you can set this field to true when creating the user. Otherwise, it will default to false for regular users.
-
-  isBanned: {                        // ← added
       type: Boolean,
       default: false,
     },
-
+    isBanned: {
+      type: Boolean,
+      default: false,
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
   },
@@ -45,7 +34,7 @@ const userSchema = new mongoose.Schema(
       virtuals: true,
       transform: (doc, ret) => {
         ret.id = ret._id;
-        delete ret._id;
+        // keep _id now
         delete ret.__v;
         delete ret.password;
         return ret;
@@ -54,15 +43,15 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving – FIXED: remove next() call in async hook
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return;
+  }
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  // No need to call next() explicitly when using async/await – Mongoose does it.
 });
 
-// Compare entered password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

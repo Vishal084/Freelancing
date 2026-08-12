@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api'; // central axios instance
+import api from '../../services/api';
 
-// Async thunk to fetch testimonials from the backend
 export const fetchTestimonials = createAsyncThunk(
   'testimonials/fetch',
   async (_, { rejectWithValue }) => {
@@ -11,6 +10,20 @@ export const fetchTestimonials = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || error.message || 'Failed to load testimonials'
+      );
+    }
+  }
+);
+
+export const submitTestimonial = createAsyncThunk(
+  'testimonials/submit',
+  async (testimonialData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/testimonials', testimonialData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to submit testimonial'
       );
     }
   }
@@ -36,11 +49,18 @@ const testimonialSlice = createSlice({
       .addCase(fetchTestimonials.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
+      })
+      .addCase(submitTestimonial.fulfilled, (state, action) => {
+        // Optionally add to list if approved immediately,
+        // but usually the new testimonial requires approval,
+        // so we don't push it. Still, you could if needed.
+      })
+      .addCase(submitTestimonial.rejected, (state, action) => {
+        state.error = action.payload;
       });
   },
 });
 
-// Selectors
 export const selectTestimonials = (state) => state.testimonials.items;
 export const selectTestimonialsLoading = (state) => state.testimonials.isLoading;
 export const selectTestimonialsError = (state) => state.testimonials.error;

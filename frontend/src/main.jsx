@@ -1,8 +1,5 @@
-
-// frontend/src/main.jsx
 import React from 'react';
-import './config'; // runs validation before app renders
-
+import './config';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { HelmetProvider } from 'react-helmet-async';
@@ -10,18 +7,20 @@ import * as Sentry from '@sentry/react';
 import { browserTracingIntegration } from '@sentry/react';
 import { store } from './redux/store';
 import App from './App';
-import ErrorBoundary from './components/ErrorBoundary';   // ✅ custom error boundary
+import ErrorBoundary from './components/ErrorBoundary';
+import { SENTRY_DSN } from './config';
+import { injectStore } from './services/api';
 import './index.css';
 
-// ---------- Sentry Initialization ----------
-Sentry.init({
-  dsn: 'YOUR_SENTRY_DSN',   // 🔁 Replace with your real DSN
-  integrations: [browserTracingIntegration()],
-  tracesSampleRate: 1.0,
-});
+injectStore(store);
 
-// Expose store for API interceptor (auto‑logout on 401)
-window.__REDUX_STORE__ = store;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    integrations: [browserTracingIntegration()],
+    tracesSampleRate: 1.0,
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -34,7 +33,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </React.StrictMode>
 );
-
 
 
 // . IMPORTS (What we're bringing in):

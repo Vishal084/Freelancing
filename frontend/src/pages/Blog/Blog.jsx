@@ -1,30 +1,34 @@
-// frontend/src/pages/Blog/Blog.jsx
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBlogs, selectBlogs, selectBlogsLoading, selectBlogsError } from '../../redux/slices/blogSlice';
 import { Helmet } from 'react-helmet-async';
-import './Blog.css'; // you can add this CSS later
+import { Link } from 'react-router-dom';
 
-const posts = [
-  { id: 1, title: 'Why Your Business Needs a Progressive Web App', excerpt: 'PWAs offer...', date: '2024-01-15', slug: 'why-pwa' },
-  { id: 2, title: 'Top 5 Tech Stacks for Startups in 2024', excerpt: 'Choosing the right...', date: '2024-02-01', slug: 'top-tech-stacks' }
-];
+const Blog = () => {
+  const dispatch = useDispatch();
+  const blogs = useSelector(selectBlogs);
+  const isLoading = useSelector(selectBlogsLoading);
+  const error = useSelector(selectBlogsError);
 
-const Blog = () => (
-  <main className="container blog-page">
-    <Helmet>
-      <title>Blog – FreelancePro</title>
-      <meta name="description" content="Read our latest articles on web development, mobile apps, and technology." />
-    </Helmet>
-    <h1>Our Blog</h1>
-    <div className="blog-grid">
-      {posts.map(post => (
-        <article key={post.id} className="blog-card">
-          <h2>{post.title}</h2>
-          <p className="date">{post.date}</p>
-          <p>{post.excerpt}</p>
-          <a href={`/blog/${post.slug}`} className="btn">Read More</a>
-        </article>
-      ))}
-    </div>
-  </main>
-);
+  useEffect(() => { dispatch(fetchBlogs()); }, [dispatch]);
 
-export default Blog;
+  return (
+    <main className="container blog-page">
+      <Helmet><title>Blog – FreelancePro</title></Helmet>
+      <h1>Our Blog</h1>
+      {isLoading && <p>Loading...</p>}
+      {error && <p className="error">Failed to load posts.</p>}
+      {!isLoading && !error && blogs.length === 0 && <p>No posts yet.</p>}
+      <div className="blog-grid">
+        {blogs.map(post => (
+          <article key={post._id} className="blog-card">
+            <h2>{post.title}</h2>
+            <p className="date">{new Date(post.createdAt).toLocaleDateString()}</p>
+            <p>{post.excerpt || post.content.substring(0, 150)}</p>
+            <Link to={`/blog/${post.slug}`} className="btn">Read More</Link>
+          </article>
+        ))}
+      </div>
+    </main>
+  );
+};

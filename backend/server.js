@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+// const mongoSanitize = require('express-mongo-sanitize');
+// const xss = require('xss-clean');
 
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
@@ -19,6 +21,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const faqRoutes = require('./routes/faqRoutes');
+const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
 
 const app = express();
 
@@ -35,27 +38,35 @@ app.set('trust proxy', 1);
 // ========================
 // Security Middleware
 // ========================
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
+// Data sanitization against NoSQL query injection
+// app.use(mongoSanitize());
+
+// Data sanitization against XSS
+// app.use(xss());
 
 // ========================
 // CORS Configuration
 // ========================
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+  : [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like curl, Postman, mobile apps)
     if (!origin) return callback(null, true);
-
-    // ✅ Get allowed origins from environment variable.
-    //    Added 'http://localhost:3000' to default list so your Vite frontend works.
-    const allowedOrigins = (
-      process.env.ALLOWED_ORIGINS ||
-      'http://localhost:3000,http://localhost:5173,http://localhost:5174'
-    ).split(',');
-
-    // If wildcard is present, allow all origins (use only for testing)
     if (allowedOrigins.includes('*')) {
-      callback(null, true);
-    } else if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error(`CORS policy does not allow access from origin: ${origin}`));
@@ -63,10 +74,9 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-// Apply CORS middleware (this also handles OPTIONS preflight automatically)
 app.use(cors(corsOptions));
 
 // ========================
@@ -78,7 +88,7 @@ app.use(express.json({ limit: '10kb' }));
 // Rate Limiting
 // ========================
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -106,6 +116,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/faqs', faqRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
 
 // ========================
 // Health Check
@@ -113,6 +124,20 @@ app.use('/api/faqs', faqRoutes);
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'FreelancePro API is running...' });
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ========================
 // Error Handler

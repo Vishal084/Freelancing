@@ -1,7 +1,12 @@
+// admin-panel/src/redux/slices/usersSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getUsers, deleteUser, toggleBan, toggleAdmin } from '../../Services/adminService';
+import { getUsers, deleteUser, toggleBan, toggleAdmin } from '../../services/adminService';
 
-export const fetchUsers = createAsyncThunk('users/fetch', getUsers);
+export const fetchUsers = createAsyncThunk('users/fetch', async () => {
+  const res = await getUsers();
+  return res.users;   // ✅ extract array
+});
+
 export const removeUser = createAsyncThunk('users/delete', (id) => deleteUser(id));
 export const banUser = createAsyncThunk('users/toggleBan', (id) => toggleBan(id));
 export const adminUser = createAsyncThunk('users/toggleAdmin', (id) => toggleAdmin(id));

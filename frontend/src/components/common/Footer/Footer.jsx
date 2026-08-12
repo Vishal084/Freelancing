@@ -1,10 +1,20 @@
-// frontend/src/components/common/Footer/Footer.jsx
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { SOCIAL_LINKS } from '../../../utils/constants'; // added
+import {
+  fetchSiteSettings,
+  selectSiteSettings,
+} from '../../../redux/slices/siteSettingsSlice';
 import './Footer.css';
 
 const Footer = () => {
+  const dispatch = useDispatch();
+  const siteSettings = useSelector(selectSiteSettings);
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    dispatch(fetchSiteSettings());
+  }, [dispatch]);
 
   const footerLinks = {
     Services: [
@@ -24,8 +34,20 @@ const Footer = () => {
       { name: 'Documentation', href: '/docs' },
       { name: 'Support', href: '/support' },
       { name: 'Privacy Policy', href: '/privacy' },
+      { name: 'FAQ', href: '/faq' },
     ],
   };
+
+  // Build social links array from backend data (same as Contact page)
+  const socialLinks = [];
+  if (siteSettings?.socialLinks) {
+    const sl = siteSettings.socialLinks;
+    if (sl.twitter) socialLinks.push({ name: 'twitter', url: sl.twitter, icon: '🐦' });
+    if (sl.linkedin) socialLinks.push({ name: 'linkedin', url: sl.linkedin, icon: '💼' });
+    if (sl.github) socialLinks.push({ name: 'github', url: sl.github, icon: '🐙' });
+    if (sl.dribbble) socialLinks.push({ name: 'dribbble', url: sl.dribbble, icon: '🎨' });
+    if (sl.instagram) socialLinks.push({ name: 'instagram', url: sl.instagram, icon: '📷' });
+  }
 
   return (
     <footer className="footer">
@@ -44,9 +66,9 @@ const Footer = () => {
               We create stunning digital experiences that help businesses thrive.
               From websites to mobile apps, we deliver excellence.
             </p>
-            {/* Social links now come from constants */}
+            {/* Dynamic social links from backend */}
             <div className="footer-social">
-              {SOCIAL_LINKS.map((platform) => (
+              {socialLinks.map((platform) => (
                 <a
                   key={platform.name}
                   href={platform.url}
@@ -75,7 +97,7 @@ const Footer = () => {
             </div>
           ))}
 
-          {/* Contact Info */}
+          {/* Contact Info (static for now) */}
           <div className="footer-contact">
             <h3>Contact Info</h3>
             <ul className="footer-contact-list">

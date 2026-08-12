@@ -8,7 +8,15 @@ const aboutSchema = new mongoose.Schema({
   milestones: [{ year: String, event: String, description: String }],
 }, {
   timestamps: true,
-  toJSON: { virtuals: true, transform: (doc, ret) => { ret.id = ret._id; delete ret._id; delete ret.__v; return ret; } }
+  toJSON: {
+    virtuals: true,
+    transform: (doc, ret) => {
+      ret.id = ret._id;
+      // _id kept
+      delete ret.__v;
+      return ret;
+    }
+  }
 });
 
 module.exports = mongoose.model('About', aboutSchema);

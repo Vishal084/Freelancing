@@ -4,22 +4,26 @@ import { fetchBlogs, addBlog, editBlog, removeBlog } from '../redux/slices/blogs
 
 const BlogManage = () => {
   const dispatch = useDispatch();
-  const { list, isLoading } = useSelector(state => state.blogs);
-  const [form, setForm] = useState({ title: '', content: '', image: '', author: '', tags: '' });
+  const { list, isLoading, error } = useSelector(state => state.blogs);
+  const [form, setForm] = useState({
+    title: '', content: '', image: '', author: '', tags: '', status: 'draft'
+  });
   const [editId, setEditId] = useState(null);
 
   useEffect(() => { dispatch(fetchBlogs()); }, [dispatch]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Convert tags string to array
-    const data = { ...form, tags: form.tags.split(',').map(t => t.trim()).filter(Boolean) };
+    const data = {
+      ...form,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean)
+    };
     if (editId) {
       dispatch(editBlog({ id: editId, data }));
     } else {
       dispatch(addBlog(data));
     }
-    setForm({ title: '', content: '', image: '', author: '', tags: '' });
+    setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'draft' });
     setEditId(null);
   };
 
@@ -29,14 +33,18 @@ const BlogManage = () => {
       content: blog.content,
       image: blog.image || '',
       author: blog.author || '',
-      tags: blog.tags ? blog.tags.join(', ') : ''
+      tags: blog.tags ? blog.tags.join(', ') : '',
+      status: blog.status || 'draft'
     });
-    setEditId(blog.id);
+    setEditId(blog._id);
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Delete this blog post?')) dispatch(removeBlog(id));
   };
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
 
   return (
     <div>
@@ -47,35 +55,33 @@ const BlogManage = () => {
         <input placeholder="Image URL (optional)" value={form.image} onChange={e => setForm({...form, image: e.target.value})} />
         <input placeholder="Author" value={form.author} onChange={e => setForm({...form, author: e.target.value})} />
         <input placeholder="Tags (comma separated)" value={form.tags} onChange={e => setForm({...form, tags: e.target.value})} />
+        <select value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+        </select>
         <button type="submit">{editId ? 'Update' : 'Add'} Blog</button>
-        {editId && <button type="button" onClick={() => { setEditId(null); setForm({ title: '', content: '', image: '', author: '', tags: '' }); }}>Cancel</button>}
+        {editId && <button type="button" onClick={() => { setEditId(null); setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'draft' }); }}>Cancel</button>}
       </form>
 
-      {isLoading ? <p>Loading...</p> : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Tags</th>
-              <th>Actions</th>
+      <table className="data-table">
+        <thead>
+          <tr><th>Title</th><th>Author</th><th>Tags</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {list.map(blog => (
+            <tr key={blog._id}>
+              <td>{blog.title}</td>
+              <td>{blog.author}</td>
+              <td>{blog.tags?.join(', ')}</td>
+              <td>{blog.status}</td>
+              <td>
+                <button onClick={() => handleEdit(blog)}>Edit</button>
+                <button onClick={() => handleDelete(blog._id)}>Delete</button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {list.map(blog => (
-              <tr key={blog.id}>
-                <td>{blog.title}</td>
-                <td>{blog.author}</td>
-                <td>{blog.tags?.join(', ')}</td>
-                <td>
-                  <button onClick={() => handleEdit(blog)}>Edit</button>
-                  <button onClick={() => handleDelete(blog.id)}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

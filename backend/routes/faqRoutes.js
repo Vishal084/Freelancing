@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getFAQs } = require('../controllers/faqControllerAdmin');   // ← fixed
+const { submitFAQ, getPublicFAQs } = require('../controllers/faqControllerAdmin');
 
-// GET /api/faqs – list all FAQs (sorted by order)
-router.get('/', getFAQs);
+// GET /api/faqs – only approved FAQs
+router.get('/', getPublicFAQs);
+
+// POST /api/faqs – user submission (no auth)
+router.post('/', submitFAQ);
 
 module.exports = router;

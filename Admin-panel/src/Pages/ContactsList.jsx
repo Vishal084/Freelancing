@@ -4,7 +4,7 @@ import { fetchContacts, removeContact } from '../redux/slices/contactsSlice';
 
 const ContactsList = () => {
   const dispatch = useDispatch();
-  const { list, isLoading } = useSelector(state => state.contacts);
+  const { list, isLoading, error } = useSelector(state => state.contacts);
   useEffect(() => { dispatch(fetchContacts()); }, [dispatch]);
 
   const handleDelete = (id) => {
@@ -12,21 +12,14 @@ const ContactsList = () => {
   };
 
   if (isLoading) return <p>Loading contacts...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
 
   return (
     <div>
       <h2>Contacts</h2>
       <table className="data-table">
         <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Service</th>
-            <th>Message</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
+          <tr><th>Name</th><th>Email</th><th>Phone</th><th>Service</th><th>Message</th><th>Date</th><th>Actions</th></tr>
         </thead>
         <tbody>
           {list.map(c => (
@@ -47,4 +40,5 @@ const ContactsList = () => {
     </div>
   );
 };
+
 export default ContactsList;

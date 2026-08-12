@@ -1,13 +1,15 @@
+// admin-panel/src/pages/OrdersManage.jsx
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllOrders, changeOrderStatus, deleteOrder } from '../redux/slices/ordersSlice';
 
 const OrdersManage = () => {
   const dispatch = useDispatch();
-  const { list, isLoading } = useSelector(state => state.orders);
+  const { list, isLoading, error } = useSelector(state => state.orders);
   useEffect(() => { dispatch(fetchAllOrders()); }, [dispatch]);
 
-  const statusOptions = ['pending', 'confirmed', 'in progress', 'completed', 'cancelled'];
+  // ✅ Correct statuses according to your backend
+  const statusOptions = ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'];
 
   const handleStatusChange = (id, newStatus) => {
     dispatch(changeOrderStatus({ id, status: newStatus }));
@@ -18,21 +20,14 @@ const OrdersManage = () => {
   };
 
   if (isLoading) return <p>Loading orders...</p>;
+  if (error) return <p className="error">Error: {error}</p>;
 
   return (
     <div>
       <h2>Orders Management</h2>
       <table className="data-table">
         <thead>
-          <tr>
-            <th>User</th>
-            <th>Service</th>
-            <th>Details</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
+          <tr><th>User</th><th>Service</th><th>Details</th><th>Price</th><th>Status</th><th>Date</th><th>Actions</th></tr>
         </thead>
         <tbody>
           {list.map(order => (
@@ -57,4 +52,5 @@ const OrdersManage = () => {
     </div>
   );
 };
+
 export default OrdersManage;

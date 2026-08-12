@@ -1,15 +1,21 @@
+// admin-panel/src/redux/slices/ordersSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   getAllOrders,
   updateOrderStatus,
   deleteOrder as deleteOrderAPI   // ← alias to avoid conflict
-} from '../../Services/adminService';
+} from '../../services/adminService';
 
-export const fetchAllOrders = createAsyncThunk('orders/fetchAll', getAllOrders);
+export const fetchAllOrders = createAsyncThunk('orders/fetchAll', async () => {
+  const res = await getAllOrders();
+  return res.orders;   // ✅ extract array from paginated response
+});
+
 export const changeOrderStatus = createAsyncThunk(
   'orders/updateStatus',
   ({ id, status }) => updateOrderStatus(id, status)
 );
+
 export const deleteOrder = createAsyncThunk(
   'orders/delete',
   (id) => deleteOrderAPI(id)       // ← use the aliased function

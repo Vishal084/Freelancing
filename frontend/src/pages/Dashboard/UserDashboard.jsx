@@ -1,14 +1,14 @@
 // frontend/src/pages/Dashboard/UserDashboard.jsx
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';   // ✅ added useLocation
 import {
   fetchUserOrders,
-  cancelOrder,                     // ✅ new import
+  cancelOrder,
   selectUserOrders,
   selectOrdersLoading,
   selectOrdersError,
-  ORDER_STATUS_COLORS,             // ✅ new import
+  ORDER_STATUS_COLORS,
 } from '../../redux/slices/orderSlice';
 import { selectCurrentUser, logout } from '../../redux/slices/authSlice';
 import { formatDate, truncateText } from '../../utils/helpers';
@@ -16,6 +16,7 @@ import './Dashboard.css';
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
+  const location = useLocation();     // ✅ for redirect after login
   const user = useSelector(selectCurrentUser);
   const userOrders = useSelector(selectUserOrders);
   const isLoading = useSelector(selectOrdersLoading);
@@ -45,7 +46,13 @@ const UserDashboard = () => {
       <main className="dashboard-container">
         <div className="dashboard-card" role="alert">
           <p>Please log in to view your dashboard.</p>
-          <Link to="/login" className="btn btn-primary">Log In</Link>
+          <Link
+            to="/login"
+            state={{ from: location.pathname }}   // ✅ redirect back to dashboard after login
+            className="btn btn-primary"
+          >
+            Log In
+          </Link>
         </div>
       </main>
     );
