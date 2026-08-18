@@ -6,7 +6,10 @@ export const fetchTestimonials = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await api.get('/testimonials');
-      return response.data;
+      const data = response.data;
+      // Backend returns { testimonials: [...], page, pages, total }
+      // We need to store only the array
+      return Array.isArray(data) ? data : data.testimonials || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || error.message || 'Failed to load testimonials'
@@ -44,16 +47,15 @@ const testimonialSlice = createSlice({
       })
       .addCase(fetchTestimonials.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload;
+        state.items = action.payload; // Now an array
       })
       .addCase(fetchTestimonials.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(submitTestimonial.fulfilled, (state, action) => {
-        // Optionally add to list if approved immediately,
-        // but usually the new testimonial requires approval,
-        // so we don't push it. Still, you could if needed.
+      .addCase(submitTestimonial.fulfilled, (state) => {
+        // New testimonial is pending; do not add to public list.
+        // The list will refresh when fetchTestimonials is called again.
       })
       .addCase(submitTestimonial.rejected, (state, action) => {
         state.error = action.payload;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, query } = require('express-validator');
+const { body } = require('express-validator');
 const validate = require('../middleware/validate');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
@@ -13,9 +13,6 @@ const { updateAbout } = require('../controllers/aboutController');
 const { getAllOrders, updateOrderStatus, deleteOrder } = require('../controllers/orderController');
 const { getContacts, deleteContact } = require('../controllers/contactController');
 const { listUsers, deleteUser, toggleBan, makeAdmin } = require('../controllers/userControllerAdmin');
-
-console.log('toggleBan:', typeof toggleBan);   // should print 'function'
-console.log('makeAdmin:', typeof makeAdmin);     // should print 'function'
 
 const { createBlog, updateBlog, deleteBlog, getBlogs } = require('../controllers/blogControllerAdmin');
 const { createTestimonial, updateTestimonial, deleteTestimonial, getTestimonials } = require('../controllers/testimonialControllerAdmin');
@@ -93,7 +90,7 @@ router.put(
 );
 router.delete('/projects/:id', deleteProject);
 
-// ── About (validation added) ──
+// ── About (validation updated) ──
 router.put('/about', [
   body('mission').optional().trim().isString(),
   body('vision').optional().trim().isString(),
@@ -106,12 +103,21 @@ router.put('/about', [
   body('teamMembers.*.name').optional().trim(),
   body('teamMembers.*.role').optional().trim(),
   body('teamMembers.*.bio').optional().trim(),
-  body('teamMembers.*.image').optional().isURL(),
+  body('teamMembers.*.image')
+    .custom((value) => {
+      if (!value || value === '') return true;          // allow empty
+      return require('validator').isURL(value);         // validate if provided
+    })
+    .withMessage('Invalid image URL'),
   body('teamMembers.*.expertise').optional().isArray(),
   body('milestones').optional().isArray(),
   body('milestones.*.year').optional().trim(),
   body('milestones.*.event').optional().trim(),
   body('milestones.*.description').optional().trim(),
+  body('stats').optional().isArray(),
+  body('stats.*.icon').optional().trim(),
+  body('stats.*.value').optional().trim(),
+  body('stats.*.label').optional().trim(),
 ], validate, updateAbout);
 
 // ── Orders ──
@@ -138,7 +144,7 @@ router.delete('/users/:id', deleteUser);
 router.put('/users/:id/ban', toggleBan);
 router.put('/users/:id/admin', makeAdmin);
 
-// ── Testimonials (validation was already present) ──
+// ── Testimonials (validation fixed: avatar accepts any string) ──
 router.get('/testimonials', getTestimonials);
 router.post(
   '/testimonials',
@@ -146,7 +152,7 @@ router.post(
     body('name').trim().notEmpty(),
     body('quote').trim().notEmpty(),
     body('role').optional().trim(),
-    body('avatar').optional().isURL(),
+    body('avatar').optional().isString(),   // <-- changed from isURL()
   ],
   validate,
   createTestimonial
@@ -157,7 +163,7 @@ router.put(
     body('name').optional().trim().notEmpty(),
     body('quote').optional().trim().notEmpty(),
     body('role').optional().trim(),
-    body('avatar').optional().isURL(),
+    body('avatar').optional().isString(),   // <-- changed from isURL()
   ],
   validate,
   updateTestimonial

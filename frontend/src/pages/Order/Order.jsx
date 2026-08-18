@@ -1,8 +1,7 @@
-// frontend/src/pages/Order/Order.jsx
 import { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async'; // ✅ added
+import { Helmet } from 'react-helmet-async';
 import {
   fetchServices,
   selectAllServices,
@@ -20,7 +19,7 @@ import {
 import { selectCurrentUser } from '../../redux/slices/authSlice';
 import './Order.css';
 
-const STORAGE_KEY = 'order_form'; // session storage key
+const STORAGE_KEY = 'order_form';
 
 const Order = () => {
   const dispatch = useDispatch();
@@ -42,49 +41,44 @@ const Order = () => {
   const [details, setDetails] = useState('');
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState(false);
-  const [loginPrompt, setLoginPrompt] = useState(false);
-
-  // ✅ Double submission lock
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Restore details from session on mount (no service logic here)
+  // Restore details from session on mount
   useEffect(() => {
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.details) setDetails(parsed.details);
-      } catch (e) {
-        // ignore corrupted data
-      }
+      } catch (e) {}
     }
   }, []);
 
   // Unified effect: restore/override selected service once services are available
   useEffect(() => {
-    if (services.length === 0) return; // wait until services are loaded
+    if (services.length === 0) return;
 
-    // 1. URL param takes absolute priority
     if (serviceId) {
-      const found = services.find((s) => s.id === serviceId);
+      const found = services.find(
+        (s) => s._id === serviceId || s.id === serviceId
+      );
       setSelectedService(found || null);
       if (!found) {
-        setFormError(
-          'The selected service was not found. Please choose one from the list below.'
-        );
+        setFormError('The selected service was not found. Please choose one from the list below.');
       } else {
-        setFormError(''); // clear any previous error
+        setFormError('');
       }
       return;
     }
 
-    // 2. Fallback to session storage
     const saved = sessionStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.serviceId) {
-          const found = services.find((s) => s.id === parsed.serviceId);
+          const found = services.find(
+            (s) => s._id === parsed.serviceId || s.id === parsed.serviceId
+          );
           if (found) {
             setSelectedService(found);
             return;
@@ -92,15 +86,13 @@ const Order = () => {
         }
       } catch (e) {}
     }
-
-    // 3. Nothing usable – leave null (selectedService already null)
   }, [serviceId, services]);
 
-  // Save form state to session whenever details or selectedService change
+  // Save form state to session
   useEffect(() => {
     const dataToSave = {
       details,
-      serviceId: selectedService?.id || null,
+      serviceId: selectedService?._id || selectedService?.id || null,
     };
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [details, selectedService]);
@@ -134,9 +126,8 @@ const Order = () => {
 
   const clearFormErrorOnChange = useCallback(() => {
     if (formError) setFormError('');
-    if (loginPrompt) setLoginPrompt(false);
     if (orderError) dispatch(clearOrdersError());
-  }, [formError, loginPrompt, orderError, dispatch]);
+  }, [formError, orderError, dispatch]);
 
   const handleDetailsChange = (e) => {
     setDetails(e.target.value);
@@ -145,25 +136,18 @@ const Order = () => {
 
   const handleServiceSelect = (e) => {
     const id = e.target.value;
-    const found = services.find((s) => s.id === id);
+    const found = services.find((s) => s._id === id || s.id === id);
     setSelectedService(found || null);
     clearFormErrorOnChange();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ✅ Prevent double submission
     if (isSubmitting) return;
 
     setFormError('');
-    setLoginPrompt(false);
     dispatch(clearOrdersError());
 
-    if (!user) {
-      setLoginPrompt(true);
-      return;
-    }
     if (!selectedService) {
       setFormError('Please select a service before placing an order.');
       return;
@@ -173,32 +157,37 @@ const Order = () => {
       return;
     }
 
-    // ✅ Validate that the price hasn't changed since selection
-    const currentService = services.find((s) => s.id === selectedService.id);
-    if (!currentService || selectedService.price !== currentService.price) {
+    // ✅ Get the latest service data from Redux
+    const currentService = services.find(
+      (s) => s._id === selectedService._id || s.id === selectedService.id
+    );
+
+    if (!currentService) {
+      setFormError('The selected service is no longer available.');
+      return;
+    }
+
+    // ✅ Compare numeric prices to avoid type mismatch
+    if (Number(selectedService.price) !== Number(currentService.price)) {
       setFormError('Service price has changed. Please re-select the service.');
       return;
     }
 
-    // Lock submission
     setIsSubmitting(true);
-
     try {
       await dispatch(
         createOrder({
-          serviceId: selectedService.id,
-          serviceName: selectedService.name,
+          serviceId: currentService._id || currentService.id,
+          serviceName: currentService.name,
           details: details.trim(),
-          price: selectedService.price,
+          price: currentService.price,
         })
       );
     } finally {
-      // Release lock regardless of success/failure
       setIsSubmitting(false);
     }
   };
 
-  // Loading while fetching services
   if (servicesLoading) {
     return (
       <main className="order-page-container" aria-busy="true">
@@ -210,7 +199,6 @@ const Order = () => {
     );
   }
 
-  // Error fetching services
   if (servicesError) {
     return (
       <main className="order-page-container" role="alert">
@@ -224,21 +212,15 @@ const Order = () => {
     );
   }
 
-  return (
-    <>
-      {/* ✅ SEO meta tags added */}
-      <Helmet>
-        <title>Place Your Order – FreelancePro</title>
-        <meta
-          name="description"
-          content="Choose from our professional services and place your order. Provide your project details and we’ll get started right away."
-        />
-      </Helmet>
-
-      <main className="order-page-container" aria-labelledby="order-heading">
-        <h1 id="order-heading">Place an Order</h1>
-
-        {loginPrompt && (
+  if (!user) {
+    return (
+      <>
+        <Helmet>
+          <title>Login Required – FreelancePro</title>
+          <meta name="description" content="You need to be logged in to place an order." />
+        </Helmet>
+        <main className="order-page-container" aria-labelledby="order-heading">
+          <h1 id="order-heading">Place an Order</h1>
           <div className="order-warning" role="alert">
             <p>🔒 You need to log in before placing an order.</p>
             <Link
@@ -249,7 +231,23 @@ const Order = () => {
               Log In
             </Link>
           </div>
-        )}
+        </main>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Helmet>
+        <title>Place Your Order – FreelancePro</title>
+        <meta
+          name="description"
+          content="Choose from our professional services and place your order. Provide your project details and we’ll get started right away."
+        />
+      </Helmet>
+
+      <main className="order-page-container" aria-labelledby="order-heading">
+        <h1 id="order-heading">Place an Order</h1>
 
         {successMessage && (
           <div className="order-success" role="status">
@@ -279,19 +277,18 @@ const Order = () => {
           </div>
         )}
 
-        {/* Service selection when no serviceId */}
         {!serviceId && !successMessage && (
           <div className="order-service-select">
             <label htmlFor="service-select">Choose a service:</label>
             <select
               id="service-select"
-              value={selectedService?.id || ''}
+              value={selectedService?._id || selectedService?.id || ''}
               onChange={handleServiceSelect}
               disabled={services.length === 0}
             >
               <option value="">-- Select a service --</option>
               {services.map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s._id || s.id} value={s._id || s.id}>
                   {s.name} (${s.price})
                 </option>
               ))}

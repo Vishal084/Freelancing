@@ -1,6 +1,5 @@
-
-import { Link } from 'react-router-dom'
-import './ServiceCard.css'
+import { Link } from 'react-router-dom';
+import './ServiceCard.css';
 
 const ServiceCard = ({ service }) => {
   return (
@@ -9,12 +8,12 @@ const ServiceCard = ({ service }) => {
       <h3>{service.name}</h3>
       <p>{service.description}</p>
       <div className="service-price">${service.price}</div>
-      <Link to={`/order?service=${service.id}`} className="btn">Order Now</Link>
+      <Link to={`/order?service=${service._id}`} className="btn">Order Now</Link>
     </div>
-  )
-}
+  );
+};
 
-export default ServiceCard
+export default ServiceCard;
 
 
 

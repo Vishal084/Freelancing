@@ -1,4 +1,3 @@
-// frontend/src/pages/About/About.jsx
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -16,7 +15,6 @@ import {
   selectTestimonialsLoading,
   selectTestimonialsError,
 } from '../../redux/slices/testimonialSlice';
-import api from '../../services/api';
 import './About.css';
 
 const AboutPage = () => {
@@ -38,6 +36,9 @@ const AboutPage = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // ---- Testimonial carousel state ----
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   // Fetch only when data is missing
   useEffect(() => {
@@ -67,20 +68,54 @@ const AboutPage = () => {
       setTestimonialForm({ name: '', quote: '', role: '' });
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 5000);
-      // Refresh the list (new testimonial might not appear until approved)
       dispatch(fetchTestimonials());
     } catch (err) {
-      setSubmitError(
-        err || 'Failed to submit testimonial. Please try again.'
-      );
+      setSubmitError(err || 'Failed to submit testimonial. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Handle input change for testimonial form
   const handleTestimonialChange = (e) => {
     setTestimonialForm({ ...testimonialForm, [e.target.name]: e.target.value });
+  };
+
+  // ---- Fallback testimonials (if no approved testimonials) ----
+  const fallbackTestimonials = [
+    {
+      quote: 'They delivered our project ahead of schedule with outstanding quality.',
+      name: 'Jane Doe',
+      company: 'TechCorp',
+    },
+    {
+      quote: 'Professional, responsive, and highly skilled. Highly recommended!',
+      name: 'John Smith',
+      company: 'StartupXYZ',
+    },
+  ];
+
+  const displayTestimonials = testimonials.length > 0 ? testimonials : fallbackTestimonials;
+
+  // ---- Carousel auto-advance every 5 seconds ----
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % displayTestimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [displayTestimonials.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % displayTestimonials.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) =>
+      prev === 0 ? displayTestimonials.length - 1 : prev - 1
+    );
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
   };
 
   // Loading state
@@ -109,7 +144,6 @@ const AboutPage = () => {
     );
   }
 
-  // No data yet
   if (!aboutData) {
     return (
       <main className="container">
@@ -118,34 +152,15 @@ const AboutPage = () => {
     );
   }
 
-  // Safe destructuring with fallback arrays
   const coreValues = aboutData?.coreValues ?? [];
   const teamMembers = aboutData?.teamMembers ?? [];
   const milestones = aboutData?.milestones ?? [];
-
-  // Stats: dynamic from API, fallback to static
-  const stats = aboutData.stats || [
+  const stats = aboutData?.stats ?? [
     { icon: '📅', value: '5+', label: 'Years Experience' },
     { icon: '🏆', value: '150+', label: 'Projects Delivered' },
     { icon: '👥', value: '98%', label: 'Happy Clients' },
     { icon: '🌍', value: '15+', label: 'Countries Served' },
   ];
-
-  // Testimonials fallback
-  const fallbackTestimonials = [
-    {
-      quote: 'They delivered our project ahead of schedule with outstanding quality.',
-      name: 'Jane Doe',
-      company: 'TechCorp',
-    },
-    {
-      quote: 'Professional, responsive, and highly skilled. Highly recommended!',
-      name: 'John Smith',
-      company: 'StartupXYZ',
-    },
-  ];
-
-  const displayTestimonials = testimonials.length > 0 ? testimonials : fallbackTestimonials;
 
   return (
     <>
@@ -168,12 +183,8 @@ const AboutPage = () => {
                 exceptional digital experiences that drive business growth.
               </p>
               <div className="about-hero-buttons">
-                <a href="#story" className="btn btn-primary">
-                  Our Story →
-                </a>
-                <a href="#team" className="btn btn-secondary">
-                  Meet Our Team 👥
-                </a>
+                <a href="#story" className="btn btn-primary">Our Story →</a>
+                <a href="#team" className="btn btn-secondary">Meet Our Team 👥</a>
               </div>
             </div>
           </div>
@@ -182,17 +193,11 @@ const AboutPage = () => {
         {/* ======== MISSION & VISION (dynamic) ======== */}
         <section id="story" className="about-mission-vision" aria-labelledby="mv-heading">
           <div className="container">
-            <h2 id="mv-heading" className="sr-only">Mission & Vision</h2>
             <div className="about-mv-grid">
               <div className="about-mv-card mission-card">
-                <div className="about-mv-icon mission-icon">
-                  <span className="icon" aria-hidden="true">🎯</span>
-                </div>
+                <div className="about-mv-icon mission-icon">🎯</div>
                 <h2>Our Mission</h2>
-                <p>
-                  {aboutData.mission ||
-                    'To empower businesses with innovative digital solutions that enhance their online presence, streamline operations, and accelerate growth in the ever-evolving digital landscape.'}
-                </p>
+                <p>{aboutData.mission || 'To empower businesses...'}</p>
                 <ul className="about-mv-list">
                   <li>✅ Deliver exceptional value</li>
                   <li>✅ Foster innovation</li>
@@ -202,24 +207,19 @@ const AboutPage = () => {
               </div>
 
               <div className="about-mv-card vision-card">
-                <div className="about-mv-icon vision-icon">
-                  <span className="icon" aria-hidden="true">👁️</span>
-                </div>
+                <div className="about-mv-icon vision-icon">👁️</div>
                 <h2>Our Vision</h2>
-                <p>
-                  {aboutData.vision ||
-                    'To become the most trusted digital partner for businesses worldwide, recognized for our technical excellence, creative innovation, and unwavering commitment to client success.'}
-                </p>
+                <p>{aboutData.vision || 'To become the most trusted...'}</p>
                 <div className="about-vision-points">
                   <div className="vision-point">
-                    <span className="point-icon" aria-hidden="true">🌍</span>
+                    <span className="point-icon">🌍</span>
                     <div>
                       <h4>Global Impact</h4>
                       <p>Expanding our reach to serve clients across continents</p>
                     </div>
                   </div>
                   <div className="vision-point">
-                    <span className="point-icon" aria-hidden="true">📈</span>
+                    <span className="point-icon">📈</span>
                     <div>
                       <h4>Continuous Growth</h4>
                       <p>Constantly evolving with technology and market trends</p>
@@ -231,7 +231,7 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* ======== STATS (dynamic with fallback) ======== */}
+        {/* ======== STATS (dynamic) ======== */}
         <section className="about-stats" aria-labelledby="stats-heading">
           <div className="container">
             <div className="section-header">
@@ -329,7 +329,7 @@ const AboutPage = () => {
           </div>
         </section>
 
-        {/* ======== TESTIMONIALS (dynamic with loading/error + submit form) ======== */}
+        {/* ======== TESTIMONIALS (dynamic with carousel) ======== */}
         <section id="testimonials" className="about-testimonials" aria-labelledby="testimonials-heading">
           <div className="container">
             <div className="section-header">
@@ -396,16 +396,39 @@ const AboutPage = () => {
               </div>
             )}
 
-            <div className="testimonials-grid">
-              {displayTestimonials.map((t, i) => (
-                <div key={i} className="testimonial-card">
-                  <p className="testimonial-text">“{t.quote}”</p>
+            {/* Carousel */}
+            {displayTestimonials.length > 0 && (
+              <div className="testimonial-carousel">
+                <div className="testimonial-slide">
+                  <p className="testimonial-text">“{displayTestimonials[currentSlide].quote}”</p>
                   <div className="testimonial-author">
-                    <strong>{t.name}</strong>, {t.company || t.role}
+                    <strong>{displayTestimonials[currentSlide].name}</strong>
+                    {displayTestimonials[currentSlide].company || displayTestimonials[currentSlide].role
+                      ? `, ${displayTestimonials[currentSlide].company || displayTestimonials[currentSlide].role}`
+                      : ''}
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="testimonial-controls">
+                  <button className="testimonial-arrow" onClick={prevSlide} aria-label="Previous testimonial">
+                    ‹
+                  </button>
+                  <div className="testimonial-dots">
+                    {displayTestimonials.map((_, i) => (
+                      <button
+                        key={i}
+                        className={`testimonial-dot ${i === currentSlide ? 'active' : ''}`}
+                        onClick={() => goToSlide(i)}
+                        aria-label={`Go to testimonial ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button className="testimonial-arrow" onClick={nextSlide} aria-label="Next testimonial">
+                    ›
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -415,12 +438,8 @@ const AboutPage = () => {
             <h2 id="cta-heading">Ready to Work With Us?</h2>
             <p>Let&apos;s build something amazing together. Our team is ready to bring your vision to life.</p>
             <div className="about-cta-buttons">
-              <Link to="/contact" className="btn btn-cta-primary">
-                Start a Project
-              </Link>
-              <Link to="/portfolio" className="btn btn-cta-secondary">
-                View Our Work
-              </Link>
+              <Link to="/contact" className="btn btn-cta-primary">Start a Project</Link>
+              <Link to="/portfolio" className="btn btn-cta-secondary">View Our Work</Link>
             </div>
           </div>
         </section>

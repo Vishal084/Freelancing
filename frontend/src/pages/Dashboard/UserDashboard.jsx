@@ -1,7 +1,6 @@
-// frontend/src/pages/Dashboard/UserDashboard.jsx
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';   // ✅ added useLocation
+import { Link, useLocation } from 'react-router-dom';
 import {
   fetchUserOrders,
   cancelOrder,
@@ -16,7 +15,7 @@ import './Dashboard.css';
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
-  const location = useLocation();     // ✅ for redirect after login
+  const location = useLocation();
   const user = useSelector(selectCurrentUser);
   const userOrders = useSelector(selectUserOrders);
   const isLoading = useSelector(selectOrdersLoading);
@@ -34,7 +33,6 @@ const UserDashboard = () => {
     dispatch(logout());
   };
 
-  // ✅ Cancel handler with confirmation
   const handleCancelOrder = (orderId) => {
     if (window.confirm('Are you sure you want to cancel this order?')) {
       dispatch(cancelOrder(orderId));
@@ -48,7 +46,7 @@ const UserDashboard = () => {
           <p>Please log in to view your dashboard.</p>
           <Link
             to="/login"
-            state={{ from: location.pathname }}   // ✅ redirect back to dashboard after login
+            state={{ from: location.pathname }}
             className="btn btn-primary"
           >
             Log In
@@ -73,7 +71,6 @@ const UserDashboard = () => {
       <section className="dashboard-section" aria-labelledby="orders-heading">
         <h2 id="orders-heading">My Orders</h2>
 
-        {/* Loading state */}
         {isLoading && (
           <div className="dashboard-status" role="status">
             <div className="spinner" aria-hidden="true"></div>
@@ -81,7 +78,6 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* Error state */}
         {!isLoading && error && (
           <div className="dashboard-error" role="alert">
             <p>❌ Error loading orders: {error}</p>
@@ -91,7 +87,6 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* Empty state */}
         {!isLoading && !error && userOrders.length === 0 && (
           <div className="dashboard-empty">
             <p>You haven’t placed any orders yet.</p>
@@ -101,14 +96,12 @@ const UserDashboard = () => {
           </div>
         )}
 
-        {/* Orders list */}
         {!isLoading && !error && userOrders.length > 0 && (
           <div className="orders-grid">
             {userOrders.map((order) => (
               <div key={order._id} className="order-card">
                 <div className="order-card-header">
                   <h3>{order.serviceName}</h3>
-                  {/* ✅ Coloured status badge */}
                   <span
                     className="order-status-badge"
                     style={{
@@ -123,14 +116,15 @@ const UserDashboard = () => {
                   <span className="order-price">${order.price}</span>
                   <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
-                {/* ✅ Cancel button (only for pending/in-progress orders) */}
-                {(order.status === 'pending' || order.status === 'in_progress') && (
+                {/* ✅ Cancel button only for pending/confirmed */}
+                {(order.status === 'pending' || order.status === 'confirmed') && (
                   <button
                     onClick={() => handleCancelOrder(order._id)}
                     className="btn btn-danger"
                     style={{ marginTop: '0.5rem' }}
+                    disabled={isLoading}
                   >
-                    Cancel Order
+                    {isLoading ? 'Cancelling...' : 'Cancel Order'}
                   </button>
                 )}
               </div>

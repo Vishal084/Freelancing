@@ -6,6 +6,8 @@ const aboutSchema = new mongoose.Schema({
   coreValues: [{ icon: String, title: String, description: String, color: String }],
   teamMembers: [{ name: String, role: String, bio: String, image: String, expertise: [String] }],
   milestones: [{ year: String, event: String, description: String }],
+    stats: [{ icon: String, value: String, label: String }],   // ← NEW
+
 }, {
   timestamps: true,
   toJSON: {

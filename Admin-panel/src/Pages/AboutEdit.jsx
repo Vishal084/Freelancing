@@ -11,7 +11,9 @@ const AboutEdit = () => {
     vision: '',
     coreValues: [],
     teamMembers: [],
-    milestones: []
+    milestones: [],
+      stats: [],          // ← NEW
+
   });
 
   useEffect(() => { dispatch(fetchAbout()); }, [dispatch]);
@@ -30,6 +32,8 @@ const AboutEdit = () => {
         coreValues: data.coreValues || [],
         teamMembers: processedTeamMembers,
         milestones: data.milestones || [],
+          stats: data.stats || [],   // ← NEW
+
       });
     }
   }, [data]);
@@ -142,6 +146,19 @@ const AboutEdit = () => {
             <button type="button" onClick={() => removeItem('milestones', i)}>Remove</button>
           </div>
         ))}
+
+{/* ====== Stats ====== */}
+<h3>Stats</h3>
+{form.stats.map((stat, i) => (
+  <div key={i} className="array-item">
+    <input placeholder="Icon (emoji)" value={stat.icon} onChange={e => handleArrayChange('stats', i, 'icon', e.target.value)} />
+    <input placeholder="Value" value={stat.value} onChange={e => handleArrayChange('stats', i, 'value', e.target.value)} />
+    <input placeholder="Label" value={stat.label} onChange={e => handleArrayChange('stats', i, 'label', e.target.value)} />
+    <button type="button" onClick={() => removeItem('stats', i)}>Remove</button>
+  </div>
+))}
+<button type="button" onClick={() => addItem('stats', { icon: '', value: '', label: '' })}>Add Stat</button>
+
         <button type="button" onClick={() => addItem('milestones', { year: '', event: '', description: '' })}>Add Milestone</button>
 
         <button type="submit" style={{ marginTop: 20 }}>Save About</button>

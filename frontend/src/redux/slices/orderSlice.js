@@ -1,34 +1,22 @@
-// frontend/src/redux/slices/orderSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import orderService from '../../services/orderService';
 
-// ──────────────────────────────
-// Order status constants
-// (Optionally move to utils/constants.js if you prefer)
-// ──────────────────────────────
 export const ORDER_STATUS = {
   PENDING: 'pending',
+  CONFIRMED: 'confirmed',
   IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
-  REVISION: 'revision',
 };
 
 export const ORDER_STATUS_COLORS = {
   pending: '#f59e0b',
+  confirmed: '#3b82f6',
   in_progress: '#3b82f6',
   completed: '#10b981',
   cancelled: '#ef4444',
-  revision: '#8b5cf6',
 };
 
-// ──────────────────────────────
-// Thunks
-// ──────────────────────────────
-
-/**
- * Create a new order.
- */
 export const createOrder = createAsyncThunk(
   'orders/create',
   async (orderData, { rejectWithValue }) => {
@@ -42,9 +30,6 @@ export const createOrder = createAsyncThunk(
   }
 );
 
-/**
- * Fetch all orders for the authenticated user.
- */
 export const fetchUserOrders = createAsyncThunk(
   'orders/fetchUser',
   async (_, { rejectWithValue }) => {
@@ -58,9 +43,6 @@ export const fetchUserOrders = createAsyncThunk(
   }
 );
 
-/**
- * Cancel an existing order by ID.
- */
 export const cancelOrder = createAsyncThunk(
   'orders/cancel',
   async (orderId, { rejectWithValue }) => {
@@ -74,9 +56,6 @@ export const cancelOrder = createAsyncThunk(
   }
 );
 
-// ──────────────────────────────
-// Slice
-// ──────────────────────────────
 const orderSlice = createSlice({
   name: 'orders',
   initialState: {
@@ -92,7 +71,6 @@ const orderSlice = createSlice({
     clearOrdersError: (state) => {
       state.error = null;
     },
-    // Optional: manual status update for real‑time or offline scenarios
     updateOrderStatusLocally: (state, action) => {
       const { orderId, status } = action.payload;
       const order = state.userOrders.find((o) => o._id === orderId);
@@ -103,7 +81,6 @@ const orderSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // ── CREATE ORDER ────────────────────────────
       .addCase(createOrder.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -111,16 +88,14 @@ const orderSlice = createSlice({
       .addCase(createOrder.fulfilled, (state, action) => {
         state.isLoading = false;
         state.lastOrder = action.payload;
-        // Avoid duplicate (uses _id from MongoDB)
         if (!state.userOrders.find((o) => o._id === action.payload._id)) {
-          state.userOrders.unshift(action.payload); // newest first
+          state.userOrders.unshift(action.payload);
         }
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
-      // ── FETCH USER ORDERS ──────────────────────
       .addCase(fetchUserOrders.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -133,14 +108,12 @@ const orderSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      // ── CANCEL ORDER ────────────────────────────
       .addCase(cancelOrder.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
       .addCase(cancelOrder.fulfilled, (state, action) => {
         state.isLoading = false;
-        // API returns the updated order with status 'cancelled'
         const cancelledOrder = action.payload;
         const index = state.userOrders.findIndex(
           (o) => o._id === cancelledOrder._id
@@ -159,7 +132,6 @@ const orderSlice = createSlice({
 export const { clearLastOrder, clearOrdersError, updateOrderStatusLocally } =
   orderSlice.actions;
 
-// Selectors
 export const selectUserOrders = (state) => state.orders.userOrders;
 export const selectLastOrder = (state) => state.orders.lastOrder;
 export const selectOrdersLoading = (state) => state.orders.isLoading;

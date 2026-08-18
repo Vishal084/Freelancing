@@ -1,19 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../services/api';
 
-export const fetchPublicFAQs = createAsyncThunk('faqs/fetchPublic', async () => {
-  const res = await api.get('/faqs');
-  return res.data;
-});
-
-export const submitFAQ = createAsyncThunk('faqs/submit', async (faqData, { rejectWithValue }) => {
-  try {
-    const res = await api.post('/faqs', faqData);
-    return res.data;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || error.message);
+export const fetchPublicFAQs = createAsyncThunk(
+  'faqs/fetchPublic',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get('/faqs');
+      const data = res.data;
+      // Backend returns { faqs: [...], page, pages, total }
+      return Array.isArray(data) ? data : data.faqs || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
   }
-});
+);
+
+export const submitFAQ = createAsyncThunk(
+  'faqs/submit',
+  async (faqData, { rejectWithValue }) => {
+    try {
+      const res = await api.post('/faqs', faqData);
+      return res.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
 
 const faqSlice = createSlice({
   name: 'faqs',
@@ -25,21 +37,32 @@ const faqSlice = createSlice({
   reducers: {
     clearFAQError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPublicFAQs.pending, (state) => { state.isLoading = true; state.error = null; })
-      .addCase(fetchPublicFAQs.fulfilled, (state, action) => { state.isLoading = false; state.items = action.payload; })
-      .addCase(fetchPublicFAQs.rejected, (state, action) => { state.isLoading = false; state.error = action.error.message; })
+      .addCase(fetchPublicFAQs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchPublicFAQs.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;   // now it's an array
+      })
+      .addCase(fetchPublicFAQs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(submitFAQ.pending, (state) => {
+        // No global loading needed for submit
+      })
       .addCase(submitFAQ.fulfilled, (state, action) => {
-        // Optionally add to list (but it won't appear until approved)
-        // state.items.push(action.payload); // Don't push because it's pending
+        // Pending FAQ must NOT be shown publicly
       })
       .addCase(submitFAQ.rejected, (state, action) => {
-        state.error = action.payload;
+        // Component handles submit errors via unwrap()
       });
-  }
+  },
 });
 
 export const { clearFAQError } = faqSlice.actions;

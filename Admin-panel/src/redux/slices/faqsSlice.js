@@ -1,11 +1,10 @@
-// admin-panel/src/redux/slices/faqsSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getFAQs, createFAQ, updateFAQ, deleteFAQ } from '../../services/adminService';
 
 export const fetchFAQs = createAsyncThunk('faqs/fetch', async (_, { rejectWithValue }) => {
   try {
     const res = await getFAQs();
-    return res.faqs;   // ✅ extract array
+    return res.faqs;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || err.message);
   }
@@ -40,8 +39,17 @@ const faqsSlice = createSlice({
   initialState: { list: [], isLoading: false, error: null },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchFAQs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
       .addCase(fetchFAQs.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.list = action.payload;
+      })
+      .addCase(fetchFAQs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       })
       .addCase(addFAQ.fulfilled, (state, action) => {
         state.list.push(action.payload);
