@@ -11,19 +11,11 @@ const orderSchema = new mongoose.Schema(
     serviceName: { type: String, required: true },
     details: { type: String, required: true },
     price: { type: Number, required: true },
-<<<<<<< HEAD
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'],
       default: 'pending',
     },
-=======
-    status: { type: String, default: 'pending' }, // pending, completed, cancelled
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
-    razorpayOrderId: { type: String },
-    razorpayPaymentId: { type: String },
-    razorpaySignature: { type: String },
->>>>>>> aug-03-amar
   },
   {
     timestamps: true,

@@ -7,7 +7,10 @@ export const fetchBlogs = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get('/blogs');
-      return res.data;
+      const data = res.data;
+      // Backend returns { blogs: [...], page, pages, total }
+      // Store only the array
+      return Array.isArray(data) ? data : data.blogs || [];
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
     }
@@ -19,12 +22,23 @@ const blogSlice = createSlice({
   initialState: { items: [], isLoading: false, error: null },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchBlogs.pending, (state) => { state.isLoading = true; state.error = null; })
-      .addCase(fetchBlogs.fulfilled, (state, action) => { state.isLoading = false; state.items = action.payload; })
-      .addCase(fetchBlogs.rejected, (state, action) => { state.isLoading = false; state.error = action.payload || 'Failed to load blogs'; });
+      .addCase(fetchBlogs.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchBlogs.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchBlogs.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to load blogs';
+      });
   },
 });
+
 export const selectBlogs = (state) => state.blogs.items;
 export const selectBlogsLoading = (state) => state.blogs.isLoading;
 export const selectBlogsError = (state) => state.blogs.error;
+
 export default blogSlice.reducer;

@@ -12,13 +12,12 @@ const Navbar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Refs for focus trap elements
   const hamburgerRef = useRef(null);
   const menuRef = useRef(null);
-  const firstFocusableRef = useRef(null);   // first real link
-  const lastFocusableRef = useRef(null);    // last real link
-  const trapStartRef = useRef(null);        // visually hidden start button
-  const trapEndRef = useRef(null);          // visually hidden end button
+  const firstFocusableRef = useRef(null);
+  const lastFocusableRef = useRef(null);
+  const trapStartRef = useRef(null);
+  const trapEndRef = useRef(null);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -28,12 +27,11 @@ const Navbar = () => {
 
   const closeMenu = () => {
     setIsMenuOpen(false);
-    hamburgerRef.current?.focus();   // return focus to hamburger
+    hamburgerRef.current?.focus();
   };
 
   const isActive = (path) => (location.pathname === path ? 'nav-active' : '');
 
-  // Close menu on Escape
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -45,11 +43,9 @@ const Navbar = () => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, []);
 
-  // Scroll lock & focus trap
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
-      // Focus the first real link after a tiny delay to allow the menu to render
       const timeout = setTimeout(() => {
         firstFocusableRef.current?.focus();
       }, 50);
@@ -62,7 +58,6 @@ const Navbar = () => {
     };
   }, [isMenuOpen]);
 
-  // Focus trap: loop Tab inside menu
   useEffect(() => {
     const handleTab = (e) => {
       if (!isMenuOpen) return;
@@ -72,13 +67,11 @@ const Navbar = () => {
 
       if (e.key === 'Tab') {
         if (e.shiftKey) {
-          // Shift+Tab: if focus is on trapStart, move to last real focusable
           if (document.activeElement === trapStart) {
             e.preventDefault();
             lastFocusableRef.current?.focus();
           }
         } else {
-          // Tab: if focus is on trapEnd, move to first real focusable
           if (document.activeElement === trapEnd) {
             e.preventDefault();
             firstFocusableRef.current?.focus();
@@ -94,7 +87,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="container nav-container">
         <Link to="/" className="logo" onClick={closeMenu}>
-          FreelancePro
+          Websitewale24.com
         </Link>
 
         <button
@@ -110,7 +103,6 @@ const Navbar = () => {
         </button>
 
         <ul className={`nav-links ${isMenuOpen ? 'active' : ''}`} ref={menuRef}>
-          {/* Visually hidden button – first element in focus trap */}
           <li className="visually-hidden-focusable">
             <button
               ref={trapStartRef}
@@ -184,7 +176,12 @@ const Navbar = () => {
                 </Link>
               </li>
               <li>
-                <button onClick={handleLogout} className="btn-logout" type="button">
+                <button
+                  onClick={handleLogout}
+                  className="btn-logout"
+                  type="button"
+                  ref={lastFocusableRef}
+                >
                   Logout
                 </button>
               </li>
@@ -215,7 +212,6 @@ const Navbar = () => {
             </>
           )}
 
-          {/* Visually hidden button – last element in focus trap */}
           <li className="visually-hidden-focusable">
             <button
               ref={trapEndRef}
