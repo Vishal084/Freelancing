@@ -16,6 +16,13 @@ const orderSchema = new mongoose.Schema(
       enum: ['pending', 'confirmed', 'in_progress', 'completed', 'cancelled'],
       default: 'pending',
     },
+<<<<<<< HEAD
+=======
+    paymentStatus: { type: String, enum: ['pending', 'paid', 'failed'], default: 'pending' },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
+>>>>>>> aug-03-amar
   },
   {
     timestamps: true,

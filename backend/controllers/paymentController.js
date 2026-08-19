@@ -92,23 +92,38 @@ const verifyPayment = async (req, res) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      // Payment verified successfully
       const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-      if (order) {
-        order.paymentStatus = 'paid';
-        order.status = 'completed';
-        order.razorpayPaymentId = razorpay_payment_id;
-        order.razorpaySignature = razorpay_signature;
-        await order.save();
-
-        return res.json({
-          success: true,
-          message: 'Payment verified successfully',
-          order: order.toJSON(),
-        });
-      } else {
+      if (!order) {
         return res.status(404).json({ message: 'Associated order not found in database' });
       }
+
+      // SECURITY: Cross-check the amount actually captured by Razorpay against
+      // the DB-derived price on the order. Never trust an amount from the client.
+      const payment = await razorpay.payments.fetch(razorpay_payment_id);
+      const expectedAmountInPaise = Math.round(order.price * 100);
+
+      if (payment.order_id !== razorpay_order_id || Number(payment.amount) !== expectedAmountInPaise) {
+        order.paymentStatus = 'failed';
+        await order.save();
+
+        return res.status(400).json({
+          success: false,
+          message: `Amount mismatch: expected ₹${order.price} but payment was for ₹${(Number(payment.amount) / 100).toFixed(2)}.`,
+        });
+      }
+
+      // Payment verified successfully
+      order.paymentStatus = 'paid';
+      order.status = 'completed';
+      order.razorpayPaymentId = razorpay_payment_id;
+      order.razorpaySignature = razorpay_signature;
+      await order.save();
+
+      return res.json({
+        success: true,
+        message: 'Payment verified successfully',
+        order: order.toJSON(),
+      });
     } else {
       // Signature mismatch - potential tampering
       const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
@@ -164,11 +179,22 @@ const handleWebhook = async (req, res) => {
       if (razorpayOrderId) {
         const order = await Order.findOne({ razorpayOrderId });
         if (order && order.paymentStatus !== 'paid') {
-          order.paymentStatus = 'paid';
-          order.status = 'completed';
-          order.razorpayPaymentId = razorpayPaymentId;
-          await order.save();
-          console.log(`Order ${order._id} updated to PAID via Webhook`);
+          // SECURITY: Confirm the captured amount matches the DB-derived price
+          // before marking the order paid.
+          const expectedAmountInPaise = Math.round(order.price * 100);
+          if (Number(paymentEntity.amount) !== expectedAmountInPaise) {
+            order.paymentStatus = 'failed';
+            await order.save();
+            console.error(
+              `Order ${order._id} amount mismatch via Webhook: expected ${expectedAmountInPaise}, got ${paymentEntity.amount}`
+            );
+          } else {
+            order.paymentStatus = 'paid';
+            order.status = 'completed';
+            order.razorpayPaymentId = razorpayPaymentId;
+            await order.save();
+            console.log(`Order ${order._id} updated to PAID via Webhook`);
+          }
         }
       }
     } else if (event === 'payment.failed') {

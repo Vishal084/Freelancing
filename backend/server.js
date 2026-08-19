@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 // Routes
+<<<<<<< HEAD
 const authRoutes = require('./routes/authRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -21,6 +22,9 @@ const testimonialRoutes = require('./routes/testimonialRoutes');
 const faqRoutes = require('./routes/faqRoutes');
 const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
 
+=======
+const apiRoutes = require("./routes/api")
+>>>>>>> aug-03-amar
 const app = express();
 
 // ========================
@@ -107,6 +111,7 @@ app.use('/api/auth', authLimiter);
 // ========================
 // Routes
 // ========================
+<<<<<<< HEAD
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/projects', projectRoutes);
@@ -118,6 +123,10 @@ app.use('/api/blogs', blogRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/site-settings', siteSettingsRoutes);
+=======
+app.use("/api", apiRoutes)
+
+>>>>>>> aug-03-amar
 
 // ========================
 // Health Check
