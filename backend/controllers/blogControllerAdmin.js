@@ -1,4 +1,4 @@
-const Blog = require('../models/BlogAdmin'); // assuming file is BlogAdmin.js
+const Blog = require('../models/BlogAdmin');
 
 // Admin: get all blogs (with pagination)
 const getBlogs = async (req, res) => {
@@ -44,7 +44,12 @@ const getPublishedBlogs = async (req, res) => {
 
 const createBlog = async (req, res) => {
   try {
-    const blog = new Blog(req.body);
+    const data = { ...req.body };
+    // If status is not explicitly provided, default to published for admin‑created blogs
+    if (!data.status) {
+      data.status = 'published';
+    }
+    const blog = new Blog(data);
     const saved = await blog.save();
     res.status(201).json(saved);
   } catch (error) {
@@ -90,4 +95,11 @@ const getBlogBySlug = async (req, res) => {
   }
 };
 
-module.exports = { createBlog, getBlogs, getPublishedBlogs, getBlogBySlug, updateBlog, deleteBlog };
+module.exports = {
+  createBlog,
+  getBlogs,
+  getPublishedBlogs,
+  getBlogBySlug,
+  updateBlog,
+  deleteBlog,
+};

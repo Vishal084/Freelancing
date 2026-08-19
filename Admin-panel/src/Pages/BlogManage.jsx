@@ -1,3 +1,4 @@
+// admin-panel/src/pages/BlogManage.jsx
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBlogs, addBlog, editBlog, removeBlog } from '../redux/slices/blogsSlice';
@@ -6,7 +7,7 @@ const BlogManage = () => {
   const dispatch = useDispatch();
   const { list, isLoading, error } = useSelector(state => state.blogs);
   const [form, setForm] = useState({
-    title: '', content: '', image: '', author: '', tags: '', status: 'draft'
+    title: '', content: '', image: '', author: '', tags: '', status: 'published'
   });
   const [editId, setEditId] = useState(null);
 
@@ -23,7 +24,7 @@ const BlogManage = () => {
     } else {
       dispatch(addBlog(data));
     }
-    setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'draft' });
+    setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'published' });
     setEditId(null);
   };
 
@@ -34,7 +35,7 @@ const BlogManage = () => {
       image: blog.image || '',
       author: blog.author || '',
       tags: blog.tags ? blog.tags.join(', ') : '',
-      status: blog.status || 'draft'
+      status: blog.status || 'published'
     });
     setEditId(blog._id);
   };
@@ -60,7 +61,7 @@ const BlogManage = () => {
           <option value="published">Published</option>
         </select>
         <button type="submit">{editId ? 'Update' : 'Add'} Blog</button>
-        {editId && <button type="button" onClick={() => { setEditId(null); setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'draft' }); }}>Cancel</button>}
+        {editId && <button type="button" onClick={() => { setEditId(null); setForm({ title: '', content: '', image: '', author: '', tags: '', status: 'published' }); }}>Cancel</button>}
       </form>
 
       <table className="data-table">

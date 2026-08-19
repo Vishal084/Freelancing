@@ -31,14 +31,29 @@ router.post(
   [
     body('title').trim().notEmpty().isLength({ max: 200 }),
     body('content').trim().notEmpty(),
-    body('image').optional().isURL(),
+    body('image')
+      .optional({ checkFalsy: true })
+      .isURL()
+      .withMessage('Image must be a valid URL'),
     body('status').optional().isIn(['draft', 'published']),
   ],
   validate,
   createBlog
 );
-router.put('/blogs/:id', updateBlog);
-router.delete('/blogs/:id', deleteBlog);
+router.put(
+  '/blogs/:id',
+  [
+    body('title').optional().trim().notEmpty().isLength({ max: 200 }),
+    body('content').optional().trim().notEmpty(),
+    body('image')
+      .optional({ checkFalsy: true })
+      .isURL()
+      .withMessage('Image must be a valid URL'),
+    body('status').optional().isIn(['draft', 'published']),
+  ],
+  validate,
+  updateBlog
+);router.delete('/blogs/:id', deleteBlog);
 
 // ── Services (added validation) ──
 router.post(
@@ -65,14 +80,17 @@ router.put(
 );
 router.delete('/services/:id', deleteService);
 
-// ── Projects (added validation) ──
+// ── Projects (validation with relative image URL support) ──
 router.post(
   '/projects',
   [
     body('title').trim().notEmpty(),
     body('category').trim().notEmpty(),
     body('description').trim().notEmpty(),
-    body('image').trim().notEmpty().isURL(),
+    body('image')
+      .trim()
+      .notEmpty()
+      .isURL({ require_protocol: false }),   // allows relative paths like /images/hero.jpg
   ],
   validate,
   createProject
@@ -83,7 +101,11 @@ router.put(
     body('title').optional().trim().notEmpty(),
     body('category').optional().trim().notEmpty(),
     body('description').optional().trim().notEmpty(),
-    body('image').optional().trim().notEmpty().isURL(),
+    body('image')
+      .optional()
+      .trim()
+      .notEmpty()
+      .isURL({ require_protocol: false }),   // allows relative paths like /images/hero.jpg
   ],
   validate,
   updateProject

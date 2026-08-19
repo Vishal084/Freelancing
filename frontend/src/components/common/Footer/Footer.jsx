@@ -1,3 +1,4 @@
+// frontend/src/components/common/Footer/Footer.jsx
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -49,6 +50,14 @@ const Footer = () => {
     if (sl.instagram) socialLinks.push({ name: 'instagram', url: sl.instagram, icon: '📷' });
   }
 
+  // Dynamic contact info with fallback
+  const phone = siteSettings?.phone || '+1 (555) 123-4567';
+  const email = siteSettings?.email || 'hello@websitewale24.com';
+  const addressLine = siteSettings
+    ? `${siteSettings.address}, ${siteSettings.city}, ${siteSettings.state} ${siteSettings.zip}`
+    : '123 Tech Street, SF 94107';
+  const workingHours = siteSettings?.workingHours || 'Mon-Fri 9am-6pm';
+
   return (
     <footer className="footer">
       <div className="footer-container">
@@ -56,9 +65,9 @@ const Footer = () => {
           {/* Company Info */}
           <div className="footer-company">
             <Link to="/" className="footer-logo">
-              <div className="footer-logo-icon">F</div>
+              <div className="footer-logo-icon">W</div>
               <div>
-                <h2>FreelancePro</h2>
+                <h2>Websitewale24.com</h2>
                 <p>Digital Solutions</p>
               </div>
             </Link>
@@ -97,20 +106,21 @@ const Footer = () => {
             </div>
           ))}
 
-          {/* Contact Info (static for now) */}
+          {/* Contact Info – now dynamic */}
           <div className="footer-contact">
             <h3>Contact Info</h3>
             <ul className="footer-contact-list">
-              <li>📞 +1 (555) 123-4567</li>
-              <li>✉️ hello@freelancepro.com</li>
-              <li>📍 123 Tech Street, SF 94107</li>
+              <li>📞 {phone}</li>
+              <li>✉️ {email}</li>
+              <li>📍 {addressLine}</li>
+              <li>🕒 {workingHours}</li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="footer-bottom">
-          <p>© {currentYear} FreelancePro. All rights reserved.</p>
+          <p>© {currentYear} Websitewale24.com. All rights reserved.</p>
           <div className="footer-bottom-links">
             <Link to="/privacy">Privacy Policy</Link>
             <Link to="/terms">Terms of Service</Link>

@@ -4,14 +4,24 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-// const mongoSanitize = require('express-mongo-sanitize');
-// const xss = require('xss-clean');
 
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 // Routes
 const apiRoutes = require("./routes/api")
+const authRoutes = require('./routes/authRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+const aboutRoutes = require('./routes/aboutRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const blogRoutes = require('./routes/blogRoutes');
+const testimonialRoutes = require('./routes/testimonialRoutes');
+const faqRoutes = require('./routes/faqRoutes');
+const siteSettingsRoutes = require('./routes/siteSettingsRoutes');
+
 const app = express();
 
 // ========================
@@ -31,30 +41,33 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
-// Data sanitization against NoSQL query injection
-// app.use(mongoSanitize());
-
-// Data sanitization against XSS
-// app.use(xss());
-
 // ========================
 // CORS Configuration
 // ========================
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-  : [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:5173',
-      'http://localhost:5174',
-    ];
+// In development, allow all origins for easy testing.
+// In production, restrict to the origins listed in ALLOWED_ORIGINS.
+const isProduction = process.env.NODE_ENV === 'production';
+
+const allowedOrigins = isProduction
+  ? (process.env.ALLOWED_ORIGINS
+      ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+      : [
+          'https://your-user-frontend.com',
+          'https://your-admin-panel.com',
+        ])
+  : '*'; // allow all origins during development
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*')) {
+
+    // In development, always allow
+    if (!isProduction) {
       return callback(null, true);
     }
+
+    // In production, check against the allowed list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -62,23 +75,16 @@ const corsOptions = {
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
 
 // ========================
-// Body Parser (with rawBody capture for Razorpay Webhook verification)
+// Body Parser
 // ========================
-app.use(
-  express.json({
-    limit: '10kb',
-    verify: (req, res, buf) => {
-      req.rawBody = buf.toString();
-    },
-  })
-);
+app.use(express.json({ limit: '10kb' }));
 
 // ========================
 // Rate Limiting
@@ -104,6 +110,17 @@ app.use('/api/auth', authLimiter);
 // ========================
 app.use("/api", apiRoutes)
 
+app.use('/api/auth', authRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/about', aboutRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/blogs', blogRoutes);
+app.use('/api/testimonials', testimonialRoutes);
+app.use('/api/faqs', faqRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
 
 // ========================
 // Health Check
@@ -111,20 +128,6 @@ app.use("/api", apiRoutes)
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'FreelancePro API is running...' });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // ========================
 // Error Handler
@@ -136,5 +139,5 @@ app.use(errorHandler);
 // ========================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
