@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 // Routes
+const apiRoutes = require("./routes/api")
 const authRoutes = require('./routes/authRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -107,6 +108,8 @@ app.use('/api/auth', authLimiter);
 // ========================
 // Routes
 // ========================
+app.use("/api", apiRoutes)
+
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/projects', projectRoutes);

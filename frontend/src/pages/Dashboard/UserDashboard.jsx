@@ -116,6 +116,23 @@ const UserDashboard = () => {
                   <span className="order-price">${order.price}</span>
                   <span className="order-date">{formatDate(order.createdAt)}</span>
                 </div>
+                {order.paymentStatus && (
+                  <span
+                    className="order-status-badge"
+                    style={{
+                      backgroundColor:
+                        order.paymentStatus === 'paid'
+                          ? '#10b981'
+                          : order.paymentStatus === 'failed'
+                          ? '#ef4444'
+                          : '#f59e0b',
+                      marginTop: '0.5rem',
+                      display: 'inline-block',
+                    }}
+                  >
+                    Payment: {order.paymentStatus}
+                  </span>
+                )}
                 {/* ✅ Cancel button only for pending/confirmed */}
                 {(order.status === 'pending' || order.status === 'confirmed') && (
                   <button

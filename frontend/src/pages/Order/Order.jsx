@@ -8,15 +8,9 @@ import {
   selectServicesLoading,
   selectServicesError,
 } from '../../redux/slices/serviceSlice';
-import {
-  createOrder,
-  clearLastOrder,
-  selectOrdersLoading,
-  selectLastOrder,
-  selectOrdersError,
-  clearOrdersError,
-} from '../../redux/slices/orderSlice';
 import { selectCurrentUser } from '../../redux/slices/authSlice';
+import paymentService from '../../services/paymentService';
+import { loadRazorpayScript } from '../../utils/loadRazorpayScript';
 import './Order.css';
 
 const STORAGE_KEY = 'order_form';
@@ -33,15 +27,12 @@ const Order = () => {
   const servicesLoading = useSelector(selectServicesLoading);
   const servicesError = useSelector(selectServicesError);
 
-  const orderLoading = useSelector(selectOrdersLoading);
-  const lastOrder = useSelector(selectLastOrder);
-  const orderError = useSelector(selectOrdersError);
-
   const [selectedService, setSelectedService] = useState(null);
   const [details, setDetails] = useState('');
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   // Restore details from session on mount
   useEffect(() => {
@@ -104,30 +95,21 @@ const Order = () => {
     }
   }, [dispatch, services.length, servicesLoading]);
 
-  // Handle successful order creation
+  // Redirect to dashboard a few seconds after a successful payment
   useEffect(() => {
-    if (lastOrder) {
-      setSuccessMessage(true);
-      dispatch(clearLastOrder());
+    if (successMessage) {
       sessionStorage.removeItem(STORAGE_KEY);
       const timer = setTimeout(() => {
         navigate('/dashboard');
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [lastOrder, dispatch, navigate]);
-
-  // Clear order error on unmount
-  useEffect(() => {
-    return () => {
-      dispatch(clearOrdersError());
-    };
-  }, [dispatch]);
+  }, [successMessage, navigate]);
 
   const clearFormErrorOnChange = useCallback(() => {
     if (formError) setFormError('');
-    if (orderError) dispatch(clearOrdersError());
-  }, [formError, orderError, dispatch]);
+    if (paymentError) setPaymentError('');
+  }, [formError, paymentError]);
 
   const handleDetailsChange = (e) => {
     setDetails(e.target.value);
@@ -146,7 +128,7 @@ const Order = () => {
     if (isSubmitting) return;
 
     setFormError('');
-    dispatch(clearOrdersError());
+    setPaymentError('');
 
     if (!selectedService) {
       setFormError('Please select a service before placing an order.');
@@ -158,8 +140,9 @@ const Order = () => {
     }
 
     // ✅ Get the latest service data from Redux
+    const selectedServiceId = selectedService._id || selectedService.id;
     const currentService = services.find(
-      (s) => s._id === selectedService._id || s.id === selectedService.id
+      (s) => (s._id || s.id) === selectedServiceId
     );
 
     if (!currentService) {
@@ -175,15 +158,62 @@ const Order = () => {
 
     setIsSubmitting(true);
     try {
-      await dispatch(
-        createOrder({
-          serviceId: currentService._id || currentService.id,
-          serviceName: currentService.name,
-          details: details.trim(),
-          price: currentService.price,
-        })
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        setPaymentError('Unable to load Razorpay checkout. Please check your connection and try again.');
+        return;
+      }
+
+      const serviceId = currentService._id || currentService.id;
+      const { razorpayOrder } = await paymentService.createRazorpayOrder(
+        serviceId,
+        details.trim()
       );
-    } finally {
+
+      const options = {
+        key: razorpayOrder.key,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+        name: 'FreelancePro',
+        description: `Payment for ${currentService.name}`,
+        order_id: razorpayOrder.id,
+        prefill: {
+          name: user.name,
+          email: user.email,
+        },
+        theme: { color: '#4f46e5' },
+        handler: async (response) => {
+          try {
+            await paymentService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            setSuccessMessage(true);
+          } catch (verifyErr) {
+            setPaymentError(
+              verifyErr.response?.data?.message ||
+                'Payment was received but verification failed. Please contact support.'
+            );
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setIsSubmitting(false),
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response) => {
+        setPaymentError(response.error?.description || 'Payment failed. Please try again.');
+        setIsSubmitting(false);
+      });
+      rzp.open();
+    } catch (err) {
+      setPaymentError(
+        err.response?.data?.message || err.message || 'Failed to initiate payment. Please try again.'
+      );
       setIsSubmitting(false);
     }
   };
@@ -253,7 +283,7 @@ const Order = () => {
           <div className="order-success" role="status">
             <span className="success-icon">✅</span>
             <div>
-              <h3>Order Placed Successfully!</h3>
+              <h3>Payment Successful!</h3>
               <p>Redirecting you to your dashboard in a few seconds…</p>
               <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
                 Go to Dashboard Now
@@ -268,10 +298,10 @@ const Order = () => {
           </div>
         )}
 
-        {orderError && !successMessage && (
+        {paymentError && !successMessage && (
           <div className="order-error-block" role="alert">
-            <p>❌ {orderError}</p>
-            <button onClick={() => dispatch(clearOrdersError())} className="btn btn-text">
+            <p>❌ {paymentError}</p>
+            <button onClick={() => setPaymentError('')} className="btn btn-text">
               Dismiss
             </button>
           </div>
@@ -320,16 +350,16 @@ const Order = () => {
               <div className="order-actions">
                 <button
                   type="submit"
-                  disabled={orderLoading || isSubmitting}
+                  disabled={isSubmitting}
                   className="btn btn-primary"
                 >
-                  {orderLoading || isSubmitting ? (
+                  {isSubmitting ? (
                     <>
                       <span className="spinner" aria-hidden="true"></span>
-                      Placing Order...
+                      Processing Payment...
                     </>
                   ) : (
-                    'Confirm Order'
+                    'Pay with Razorpay'
                   )}
                 </button>
                 <Link to="/services" className="btn btn-secondary">
