@@ -1,9 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDashboard } from '../../Services/adminService';
+import { getDashboard } from '../../services/adminService';
 
-export const fetchDashboard = createAsyncThunk('dashboard/fetch', async () => {
-  return await getDashboard();
-});
+export const fetchDashboard = createAsyncThunk(
+  'dashboard/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await getDashboard();
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
 
 const dashboardSlice = createSlice({
   name: 'dashboard',
@@ -11,6 +18,11 @@ const dashboardSlice = createSlice({
     stats: null,
     isLoading: false,
     error: null,
+  },
+  reducers: {
+    clearDashboardError: (state) => {
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -24,9 +36,10 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboard.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message;
+        state.error = action.payload || action.error.message;
       });
   },
 });
 
+export const { clearDashboardError } = dashboardSlice.actions;
 export default dashboardSlice.reducer;
