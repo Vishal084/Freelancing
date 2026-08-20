@@ -1,6 +1,15 @@
 // admin-panel/src/redux/slices/authSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { login, getMe } from '../../services/adminService';   // ✅ correct path
+import { login, getMe } from '../../services/adminService';
+
+// ✅ Safe JSON parse to avoid crash on corrupted localStorage
+const safeParse = (str) => {
+  try {
+    return str ? JSON.parse(str) : null;
+  } catch {
+    return null;
+  }
+};
 
 export const loginAdmin = createAsyncThunk(
   'auth/login',
@@ -27,8 +36,8 @@ export const fetchMe = createAsyncThunk(
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: JSON.parse(localStorage.getItem('adminUser')),
-    token: localStorage.getItem('adminToken'),   // ✅ changed to adminToken
+    user: safeParse(localStorage.getItem('adminUser')),
+    token: localStorage.getItem('adminToken'),
     isLoading: false,
     error: null,
   },
@@ -38,13 +47,15 @@ const authSlice = createSlice({
       localStorage.removeItem('adminUser');
       state.user = null;
       state.token = null;
+      state.error = null;          // ✅ clear any error on logout
     },
-    clearError: (state) => {    // ✅ new reducer
+    clearError: (state) => {
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Login
       .addCase(loginAdmin.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -60,15 +71,18 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
+      // Session restore / fetch current user
       .addCase(fetchMe.pending, (state) => {
         state.isLoading = true;
+        state.error = null;        // ✅ clear old errors
       })
       .addCase(fetchMe.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload;
+        // Refresh stored user data so it stays up‑to‑date
+        localStorage.setItem('adminUser', JSON.stringify(action.payload));
       })
       .addCase(fetchMe.rejected, (state, action) => {
-        // ✅ token invalid or expired → force logout
         state.isLoading = false;
         state.error = action.payload;
         state.user = null;
