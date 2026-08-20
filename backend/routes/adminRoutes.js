@@ -212,4 +212,4 @@ router.delete('/faqs/:id', deleteFAQ);
 router.get('/site-settings', getSiteSettings);
 router.put('/site-settings', updateSiteSettings);
 
-module.exports = router;s
+module.exports = router;
